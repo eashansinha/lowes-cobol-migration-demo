@@ -214,11 +214,13 @@ Devin never moves a ticket to `Done`. While a PR is open the ticket stays in
 
 ## 5. Pre-flight checklist (15 minutes before)
 
-- [ ] PR #1 merged to `main` (or tell the session to use branch
-      `devin/lowes-cobol-demo-scaffold`) so the estate is on the indexed branch.
-- [ ] Atlassian connection authorised in Eashan-Dev; project `MFM` exists with
-      MFM-101 and MFM-102 in `Ready for Devin` (text in `JIRA_SETUP.md`).
+- [x] PR #1 merged to `main`, so the estate is on the indexed branch.
+- [x] Atlassian connection authorised in Eashan-Dev; project `MFM` exists.
+      MFM-1 / MFM-2 (aliases MFM-101 / MFM-102) are in `In Progress` with
+      sessions already attached; to show the pick-up moment live, use MFM-10
+      (Backlog, no session) or move MFM-2 back to `Ready for Devin` first.
       Fallback: use Prompt A / Prompt B from `DEMO_RUNBOOK.md`.
+- [x] Routing to Eashan-Dev verified via MFM-9 / MFM-14 (see section 1A).
 - [ ] Jira integration: `!jcl_migrate` and `!cobol_fix` added as playbook labels.
 - [ ] Warm-up session on the repo: *"Run tests/run_tests.sh and report MAXCC
       and pass count"* -> MAXCC=4, 48 passed. Confirms snapshot + GnuCOBOL.
