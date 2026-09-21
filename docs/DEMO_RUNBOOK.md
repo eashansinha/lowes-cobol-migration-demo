@@ -63,7 +63,7 @@ Devin needs regardless.
 
 Start a throwaway Devin session on the repo an hour before: "Run
 `tests/run_tests.sh` and tell me the MAXCC and how many tests pass." This
-confirms the blueprint, the snapshot and GnuCOBOL. Expect: MAXCC=4, 48 passed.
+confirms the blueprint, the snapshot and GnuCOBOL. Expect: MAXCC=4, 49 passed.
 
 ---
 

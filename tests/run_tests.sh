@@ -74,12 +74,27 @@ assert_grep "BR-V5 lapsed promo skipped"                                      "$
 assert_grep "BR-U2 promo already in effect -> NOCHG"                          "$RPT" '^PRM2026112 10020977 MW  P .*NOCHG    PROMO ALREADY IN EFFECT'
 assert_grep "BR-U1 missing ITEM_PRICE row rejected"                           "$RPT" '^PRM2026132 10199001 NC  P .*REJECT   NO ITEM_PRICE ROW FOR REGION'
 
-# Documented CURRENT behaviour of the clearance path (subject of Jira MFM-102):
-# floor 273.00 is applied before the round-down, so the shelf price lands at
-# 272.99, one cent BELOW the floor. The golden files freeze this behaviour;
-# MFM-102 changes the expected value to 273.09 and updates this assertion.
-assert_grep "BR-P6 clearance floor (CURRENT behaviour, see MFM-102: 272.99 < floor 273.00)" \
-    "$RPT" '^PRM2026123 10082345 NE  P +498\.00 +498\.00 +272\.99  FLOOR +UPDATED'
+# Clearance path (MFM-102 / MFM-15): 498.00 -40% -> 298.80, x0.90 -> 268.92,
+# round down -> 268.89, floor 273.00 applied, rounded UP to .x9 -> 273.09.
+assert_grep "BR-P6 clearance floor, rounded UP to .x9 (498.00 -40% x0.90 -> 273.09)" \
+    "$RPT" '^PRM2026123 10082345 NE  P +498\.00 +498\.00 +273\.09  FLOOR +UPDATED'
+
+# Regression guard: every clearance item (IM-STATUS = C) whose price was raised
+# to the margin floor must carry a NEW-PRICE >= IM-UNIT-COST * (100 + PCT) / 100.
+CLR_BELOW_FLOOR="$(awk '
+    NR == FNR {
+        if (substr($0, 47, 1) == "C")
+            floor_cents[substr($0, 1, 8)] = substr($0, 48, 7) * (100 + substr($0, 62, 3)) / 100
+        next
+    }
+    ($2 in floor_cents) && $8 == "FLOOR" && $NF == "UPDATED" {
+        checked++
+        if (int($7 * 100 + 0.5) < floor_cents[$2])
+            printf "%s (floor %.2f)\n", $0, floor_cents[$2] / 100
+    }
+    END { if (checked == 0) print "no clearance FLOOR rows on the report" }
+' "$ROOT/data/input/ITEMMAST.dat" "$RPT")"
+assert_eq "BR-P6 regression: no clearance FLOOR row is priced below its floor" "" "$CLR_BELOW_FLOOR"
 
 echo "== T05 DB2 after-state (CSV stand-in)"
 IP="$WORK/ITEM_PRICE.csv"

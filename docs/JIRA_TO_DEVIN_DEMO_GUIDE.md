@@ -214,7 +214,7 @@ Devin never moves a ticket to `Done`. While a PR is open the ticket stays in
       Fallback: use Prompt A / Prompt B from `DEMO_RUNBOOK.md`.
 - [ ] Jira integration: `!jcl_migrate` and `!cobol_fix` added as playbook labels.
 - [ ] Warm-up session on the repo: *"Run tests/run_tests.sh and report MAXCC
-      and pass count"* -> MAXCC=4, 48 passed. Confirms snapshot + GnuCOBOL.
+      and pass count"* -> MAXCC=4, 49 passed. Confirms snapshot + GnuCOBOL.
 - [ ] Optional pre-run of MFM-101 (Java build takes minutes) kept open as a
       fallback session.
 - [ ] Browser tabs: Jira board, Devin org (repo, playbooks, knowledge),

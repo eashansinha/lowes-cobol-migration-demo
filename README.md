@@ -74,15 +74,16 @@ the spec template):
 | BR-R1..R3 | `PRCRGN01`: NC (AK/HI) suppresses BOGO and adds 8% freight uplift capped at regular; WC caps lumber discounts at 15% |
 | BR-P4 | round **down** to a `.x9` price ending |
 | BR-P5 | margin floor = unit cost x (1 + floor %); a floored price is rounded **up** to the next `.x9` |
-| BR-P6 | clearance items (status C) take an extra 10% stacking markdown, then floor, then rounding |
+| BR-P6 | clearance items (status C) take an extra 10% stacking markdown, then the same round-down / floor / round-up sequence as BR-P4/P5 |
 | BR-E1 | promo prices whose end date has passed revert to regular price (phase 1) |
 | BR-U1..U3 | update `ITEM_PRICE` in place, insert one `PRICE_HIST` row per change, `NOCHG` when the promo is already in effect |
 
-> **Known defect (planted, documented):** BR-P6 applies the floor *before* the
-> round-down, so a floored clearance price can land one cent below the floor
-> (`10082345` at 272.99 vs floor 273.00 in the golden report). The golden files
-> freeze this current behaviour; Jira ticket **MFM-102** fixes it. See
-> `docs/JIRA_SETUP.md`.
+> **Planted defect (fixed):** BR-P6 originally applied the floor *before* the
+> round-down, so a floored clearance price landed one cent below the floor
+> (`10082345` at 272.99 vs floor 273.00). Jira tickets **MFM-102** / **MFM-15**
+> reordered `2620-CLEARANCE-PRICING`; the golden report now carries 273.09 and
+> `tests/run_tests.sh` guards against any clearance FLOOR row below its floor.
+> See `docs/JIRA_SETUP.md` for the original ticket write-up.
 
 ## DB2 stand-in model (CSV dumps)
 
