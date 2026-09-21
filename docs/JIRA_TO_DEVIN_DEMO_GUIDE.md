@@ -13,6 +13,14 @@ ticket text). This guide answers three questions Omkar asked for on 2026-09-18:
 Everything below is set up in the Eashan-Dev Devin org against
 `eashansinha/lowes-cobol-migration-demo`.
 
+Live sandbox (cog-gtm Jira, project `MFM`, board
+https://cog-gtm.atlassian.net/jira/software/projects/MFM/boards/2594):
+
+| Docs alias | Live key | URL |
+|------------|----------|-----|
+| MFM-101 migrate `PRCUPD01` to Java | `MFM-1` | https://cog-gtm.atlassian.net/browse/MFM-1 |
+| MFM-102 fix clearance floor rounding | `MFM-2` | https://cog-gtm.atlassian.net/browse/MFM-2 |
+
 ---
 
 ## 1. Three ways a ticket becomes a session
@@ -51,7 +59,8 @@ and a second one *label = maintenance, playbook = `!cobol_fix`* (bugs).
    and paste:
 
    ```
-   Work Jira ticket <MFM-101 URL>. Read the ticket and its comments first,
+   Work Jira ticket https://cog-gtm.atlassian.net/browse/MFM-1 (MFM-101 in
+   the docs). Read the ticket and its comments first,
    then follow the playbook !jcl_migrate. Post a short comment on the ticket
    at the end of each phase (explore / specify / plan / implement / verify)
    and move it to In Progress now and In Review when the PR is open.
