@@ -1,5 +1,16 @@
 # Demo guide: Jira ticket -> Devin session -> verified PR
 
+> **Status (2026-09-21):** the live demo now runs from a Markdown task file
+> (`docs/tasks/GLPOST01.md`) with **one** org playbook, `!cobol_job_migrate`
+> (`playbooks/cobol-job-migration.md`); see `DEMO_RUNBOOK.md`. Jira is the
+> *later* task source, and this guide is kept as the reference for that path.
+> The `!jcl_migrate`, `!cobol_fix` and `!cobol_ask` macros it used to name
+> have been removed from the Devin org: migration work uses
+> `!cobol_job_migrate`; ask mode is Ask Devin / DeepWiki with the repo skill
+> `.agents/skills/cobol-ask/SKILL.md` (no macro); in-place fixes such as
+> MFM-2 / MFM-10 have no playbook and are worked in a plain session that
+> follows `.agents/skills/mfm-jira-board/SKILL.md` from a task file.
+
 Companion to `DEMO_RUNBOOK.md` (minute-by-minute) and `JIRA_SETUP.md` (board and
 ticket text). This guide answers three questions Omkar asked for on 2026-09-18:
 
@@ -31,40 +42,99 @@ engineers will actually do day to day".
 ### A. Jira integration (hands-off)
 
 Requires Jira connected in *Settings -> Connections -> Jira* of the Devin org
-and the two batch playbooks added as **playbook labels**
-(`!jcl_migrate`, `!cobol_fix`). Then any one of these starts a session with
-the ticket as the task:
+and the playbook added as a **playbook label** (`!cobol_job_migrate`; create
+the same-named label in the MFM project).
+Every trigger below *starts a session*; what that session is allowed to do is
+decided by the playbook it lands on, and whether it starts at all by the
+integration's **Session mode**:
 
 | Trigger in Jira | What Devin uses |
 |-----------------|-----------------|
-| Assign the ticket to the Devin user | default playbook |
-| Add label `devin` | default playbook |
-| Add label `!jcl_migrate` or `!cobol_fix` | that playbook |
+| Comment `@Devin <question>` (ask mode) | a session that follows the repo skill `cobol-ask`: read-only analysis, answer + task-file-shaped plan as a Jira comment, no code, no PR, no transition |
+| Add label `!cobol_job_migrate` | the migration playbook, full implementation session |
+| Assign the ticket to the Devin user / add label `devin` | default playbook (leave unset, or `!cobol_job_migrate` for a migration-only board) |
 | Comment `@Devin <instruction>` | the comment as the task, no playbook |
-| Automation trigger: project `MFM`, status `Ready for Devin` | configured playbook |
+| Automation trigger: project `MFM`, status `Ready for Devin` | configured playbook (not yet verified on the sandbox, see below) |
 
-Devin posts the session link back as a Jira comment, moves the ticket to
-`In Progress`, and when the PR opens it adds the PR as a remote link plus a
-comment with the verification summary. Follow-ups are `@Devin` comments on the
-ticket; they route to the existing session.
+**Ask mode, two ways to get it**
+
+1. *Repo skill `cobol-ask`* (what we demo, from Ask Devin / DeepWiki). It is
+   read-only - no edits, builds, PRs or Jira transitions - and tells Devin to
+   answer with `file:line` citations, list observed defects as "preserve",
+   and when asked to plan produce a `docs/tasks/<JOB>.md`-shaped task that
+   ends with the Devin prompt. Because it is a repo skill it applies in any
+   session on the repo, including one started from a Jira comment. Costs one
+   short session; `!cobol_job_migrate` on another ticket still runs as a
+   full session.
+2. *Session mode = Scoping only* (integration setting). Devin then never
+   starts a session from Jira: every trigger yields a scoping comment
+   (summary, implementation plan, confidence estimate) and a link you click
+   to start the real session yourself. Org-wide toggle - it turns off
+   hands-off implementation for every project, so use it for a customer that
+   wants humans to approve every session, not for the demo.
+
+Plain `@Devin how does X work?` is *not* ask mode by itself: without a
+playbook it starts a full session with the comment as the task (though a
+question-shaped task usually stays read-only). Say "ask mode" / "explain" /
+"plan" so the `cobol-ask` skill applies, and never say "implement".
+
+In full sessions Devin posts the session link back as a Jira comment, moves
+the ticket to `In Progress`, and when the PR opens it adds the PR as a remote
+link plus a comment with the verification summary. Follow-ups are `@Devin`
+comments on the ticket; they route to the existing session.
+
+Verified on the cog-gtm sandbox (2026-09-21): creating an MFM ticket **with the
+`devin` label** starts a session in the Eashan-Dev org within seconds and links
+it back on the ticket (MFM-9, MFM-14). Creating a ticket without the label, or
+re-adding the label to an existing ticket that already has a session, does not.
+The `devin`-labelled tickets are the ones you want Devin to work; keep the
+label off pure context/history tickets.
 
 For the board in `JIRA_SETUP.md` the automation trigger to configure is:
-*project = MFM, status = Ready for Devin, playbook = `!jcl_migrate`* (stories)
-and a second one *label = maintenance, playbook = `!cobol_fix`* (bugs).
+*project = MFM, status = Ready for Devin, playbook = `!cobol_job_migrate`*
+(migration stories only; bugs have no playbook and are started by hand). The
+automation has not been exercised on the sandbox yet (the `devin` label is the
+only trigger verified above), so do not rely on a status move to start a
+session during the demo unless you have tested it first; use the label or
+path B instead.
+
+**Why every session knows about the board.** Two always-on pieces of
+context, no prompt needed:
+
+- Repo skill `.agents/skills/mfm-jira-board/SKILL.md` - board URL, live
+  ticket keys, the phase-comment format (`BASELINE / EXPLORE / IMPLEMENT /
+  PARITY / VERIFY`), the transitions Devin owns (`Ready for Devin -> In
+  Progress -> In Review`) and the ones it never touches (`Verified`, `Done`).
+  Devin discovers `SKILL.md` files from the index at session start and again
+  from disk once the repo is cloned.
+- Org knowledge note *"MFM Jira board protocol"* pinned to the repo in the
+  Devin org - a short pointer to the same rules so they are present before the
+  clone finishes and in Ask Devin.
+
+The playbook (`!cobol_job_migrate`) opens with "read the task file and
+follow `mfm-jira-board`", so the board is read at the start, written at every
+phase, and the ticket lands in `In Review` with the evidence attached.
 
 ### B. Ask Devin / new session from the ticket (what we drive live)
 
 1. Open the ticket in Jira, copy its URL.
 2. In Devin, start a new session on the repo `eashansinha/lowes-cobol-migration-demo`
-   and paste:
+   and paste, filling in the ticket URL and the playbook (`!cobol_job_migrate`
+   for migration Stories; for Bugs omit the playbook sentence - there is none):
 
    ```
-   Work Jira ticket https://cog-gtm.atlassian.net/browse/MFM-1 (MFM-101 in
-   the docs). Read the ticket and its comments first,
-   then follow the playbook !jcl_migrate. Post a short comment on the ticket
-   at the end of each phase (explore / specify / plan / implement / verify)
+   Work Jira ticket <TICKET_URL>. Read the ticket and its comments first,
+   then follow the playbook <PLAYBOOK>. Post a short comment on the ticket
+   at the end of each phase (baseline / explore / implement / parity / verify)
    and move it to In Progress now and In Review when the PR is open.
    ```
+
+   Filled in for the two tickets used in this demo:
+
+   - MFM-1 (MFM-101, migration Story):
+     `Work Jira ticket https://cog-gtm.atlassian.net/browse/MFM-1 ... follow the playbook !cobol_job_migrate ...`
+   - MFM-10 (WC lumber cap Bug, the fresh pick-up):
+     `Work Jira ticket https://cog-gtm.atlassian.net/browse/MFM-10 ... follow .agents/skills/mfm-jira-board/SKILL.md; no playbook ...`
 
    Devin reads the ticket through the Jira connection (or, if Jira is not
    connected, use Prompt A / Prompt B from `DEMO_RUNBOOK.md` which contain the
@@ -130,7 +200,7 @@ Environment as configured in Eashan-Dev (mirror this for Lowe's):
 | Repo indexed | `eashansinha/lowes-cobol-migration-demo` (main) |
 | Repo blueprint | installs GnuCOBOL, runs `scripts/build.sh`, knowledge entries for build/test/verify/DB2 |
 | Knowledge note | "Lowe's COBOL demo repo: verification loop and working rules", pinned to the repo |
-| Playbooks | `!cobol_to_springboot` (CICS/online), `!jcl_migrate` (batch migration), `!cobol_fix` (in-place maintenance) |
+| Playbooks | `!cobol_job_migrate` (batch migration, the only one in the demo); `!cobol_to_springboot` (CICS/online, separate demo) |
 | Secrets | none required |
 | Jira | Atlassian connection must be (re)authorised by Eashan; project `MFM`, board per `JIRA_SETUP.md` |
 
@@ -207,12 +277,15 @@ Devin never moves a ticket to `Done`. While a PR is open the ticket stays in
 
 ## 5. Pre-flight checklist (15 minutes before)
 
-- [ ] PR #1 merged to `main` (or tell the session to use branch
-      `devin/lowes-cobol-demo-scaffold`) so the estate is on the indexed branch.
-- [ ] Atlassian connection authorised in Eashan-Dev; project `MFM` exists with
-      MFM-101 and MFM-102 in `Ready for Devin` (text in `JIRA_SETUP.md`).
+- [x] PR #1 merged to `main`, so the estate is on the indexed branch.
+- [x] Atlassian connection authorised in Eashan-Dev; project `MFM` exists.
+      MFM-1 / MFM-2 (aliases MFM-101 / MFM-102) are in `In Progress` with
+      sessions already attached; to show the pick-up moment live, use a ticket
+      with no existing session, such as MFM-10 (no playbook; plain session).
       Fallback: use Prompt A / Prompt B from `DEMO_RUNBOOK.md`.
-- [ ] Jira integration: `!jcl_migrate` and `!cobol_fix` added as playbook labels.
+- [x] Routing to Eashan-Dev verified via MFM-9 / MFM-14 (see section 1A).
+- [ ] Jira integration: `!cobol_job_migrate` added as a playbook label (optional;
+      the runbook does not depend on it).
 - [ ] Warm-up session on the repo: *"Run tests/run_tests.sh and report MAXCC
       and pass count"* -> MAXCC=4, 48 passed. Confirms snapshot + GnuCOBOL.
 - [ ] Optional pre-run of MFM-101 (Java build takes minutes) kept open as a

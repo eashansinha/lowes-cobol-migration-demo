@@ -1,0 +1,18 @@
+{
+  "name": "GLEXCEPT",
+  "copybook": "cobol/copybooks/GLEXCREC.cpy",
+  "recfm": "FB",
+  "lrecl": 80,
+  "encoding": "ASCII (EBCDIC on the mainframe; convert one direction before comparing)",
+  "key": ["TRAN-ID"],
+  "fields": [
+    {"name": "TRAN-ID",   "start": 1,  "length": 10, "type": "char"},
+    {"name": "ACCT-NO",   "start": 11, "length": 10, "type": "char"},
+    {"name": "REASON-CD", "start": 21, "length": 4,  "type": "char"},
+    {"name": "REASON-TX", "start": 25, "length": 30, "type": "char"},
+    {"name": "AMOUNT",    "start": 55, "length": 13, "type": "num", "scale": 2, "money": true},
+    {"name": "DR-CR",     "start": 68, "length": 1,  "type": "char"},
+    {"name": "BATCH-ID",  "start": 69, "length": 8,  "type": "char"},
+    {"name": "FILLER",    "start": 77, "length": 4,  "type": "char"}
+  ]
+}

@@ -1,10 +1,35 @@
-# NIGHTLY MERCHANDISING BATCH STREAM - PRICING / INVENTORY (extract)
+# NIGHTLY BATCH STREAMS - PRICING / INVENTORY and FINANCE GL (extract)
 # Scheduler manifest (CA-7 / Control-M style, simplified).
 #
 # Columns: JOB  START  MAXRUN  PREDECESSORS (job:maxcc)  NOTES
 #
-# All times America/New_York. Stream starts after the store-close
-# transaction sweep (STRCLOS1) completes.
+# All times America/New_York. The pricing stream starts after the
+# store-close transaction sweep (STRCLOS1) completes; the GL stream
+# starts after the sub-ledger day-end extracts.
+#
+# ---- FINANCE: GENERAL LEDGER --------------------------------------
+
+APEXTR01   01:15   00:15   APCLOSE1:0                 AP journal extract; DISP=(NEW,CATLG) creates GL.PROD.GLTRANS.DAILY(+1) (batch AP*)
+ARXTR01    01:30   00:15   APEXTR01:0 ARCLOSE1:0      AR journal extract; DISP=MOD appends to GL.PROD.GLTRANS.DAILY(0) (batch AR*)
+PAYXTR01   01:45   00:10   ARXTR01:0 PAYCLOS1:0       Payroll journal extract; DISP=MOD appends to GL.PROD.GLTRANS.DAILY(0) (batch PAY*/MAN*)
+GLPOST01   02:00   00:20   APEXTR01:0 ARXTR01:0 PAYXTR01:0  *** DEMO JOB *** daily GL posting of GLTRANS.DAILY(0); MAXCC 4 = exceptions / OOB batch, review GLRPT
+GLBAL01    02:45   00:30   GLPOST01:4                 Trial balance; reads GL.PROD.GLPOSTED.DAILY(0)
+GLSUSP01   02:45   00:10   GLPOST01:4                 Suspense clearing work list from GL.PROD.GLEXCEPT.DAILY(0)
+
+#   APCLOSE1 --> APEXTR01 --> ARXTR01 --> PAYXTR01 --> GLPOST01 --+--> GLBAL01
+#                ARCLOSE1 ----^  PAYCLOS1 ----^                  +--> GLSUSP01
+#
+#   The three extracts are serialised on purpose: one generation of
+#   GL.PROD.GLTRANS.DAILY per night, created by APEXTR01 and appended to
+#   (DISP=MOD) by the other two, so GLPOST01 STEP010 SORTIN on (0) sees
+#   every sub-ledger. An extract that ends non-zero stops the chain; the
+#   generation is deleted and the chain restarts from APEXTR01.
+#
+#   GLPOST01 MAXCC 8 (empty feed / bad SYSIN) or 16 (abend): GLBAL01 and
+#   GLSUSP01 do not start; fix and rerun from STEP010 - outputs are new GDG
+#   generations so a rerun never double-posts.
+#
+# ---- MERCHANDISING: PRICING / INVENTORY ----------------------------
 
 ITMUNLD1   00:45   00:20   STRCLOS1:0                 Item master VSAM -> QSAM unload (PRC.PROD.ITEMMAST.UNLOAD)
 PRMEXTR1   01:00   00:15   -                          Promo planner extract -> PRC.PROD.PROMO.FEED(+1)

@@ -1,0 +1,20 @@
+{
+  "name": "GLTRANS",
+  "copybook": "cobol/copybooks/GLTRNREC.cpy",
+  "recfm": "FB",
+  "lrecl": 100,
+  "key": ["TRAN-ID"],
+  "fields": [
+    {"name": "TRAN-ID",     "start": 1,  "length": 10, "type": "char"},
+    {"name": "POST-DATE",   "start": 11, "length": 8,  "type": "num"},
+    {"name": "ACCT-NO",     "start": 19, "length": 10, "type": "char"},
+    {"name": "COST-CTR",    "start": 29, "length": 6,  "type": "char"},
+    {"name": "DR-CR",       "start": 35, "length": 1,  "type": "char"},
+    {"name": "AMOUNT",      "start": 36, "length": 13, "type": "num", "scale": 2, "money": true},
+    {"name": "CURRENCY",    "start": 49, "length": 3,  "type": "char"},
+    {"name": "SOURCE",      "start": 52, "length": 4,  "type": "char"},
+    {"name": "BATCH-ID",    "start": 56, "length": 8,  "type": "char"},
+    {"name": "DESCRIPTION", "start": 64, "length": 30, "type": "char"},
+    {"name": "FILLER",      "start": 94, "length": 7,  "type": "char"}
+  ]
+}

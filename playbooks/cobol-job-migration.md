@@ -1,86 +1,106 @@
-# Playbook: migrate a JCL batch job to Java (Spring Batch) with equivalence verification
+# Playbook: migrate one COBOL/JCL batch job with file parity
 
-Installed in the Devin org as macro `!jcl_migrate` (usable as a Jira playbook label).
+Installed in the Devin org as macro `!cobol_job_migrate`. This is the **only**
+playbook in the demo. It takes one job from a task file (Markdown today, a Jira
+issue once the integration is enabled) to a PR that proves, with a byte-level
+file comparison on identical inputs, that the new implementation writes the
+same output files as the mainframe job.
 
-Use for tickets of the form *"Migrate <JOB> to Java with equivalence
-verification"*. One job per ticket. The deliverable is a PR whose description
-proves, with a byte-compare, that the Java job produces the same report and
-the same database after-state as the COBOL job on identical inputs.
+Use it once per job. To do many jobs, a parent session runs this playbook in
+one child session per job (see "Parallel" at the end).
+
+## Inputs
+
+- `docs/tasks/<JOB>.md` - the task: issue, Ask findings with citations, file
+  layouts, reproduction command, verification method, acceptance criteria.
+  If given a Jira issue instead, treat its description as this file.
+- The repo skill `.agents/skills/mfm-jira-board/SKILL.md` for how to report
+  progress (Markdown task file: append a `## Session log` section; Jira: one
+  comment per phase, transitions Devin owns only).
 
 ## Procedure
 
-1. **Claim the ticket.** Move the Jira ticket to *In Progress* and comment with
-   this session's link. Read the ticket's acceptance criteria; if the repo,
-   job name or required proof is missing, ask once, then proceed with the
-   defaults below.
+1. **Read the task first, code second.** Extract: job name, input DDs, output
+   DDs, layouts, the reproduction command, the required proof, and every line
+   marked "preserve". If the task file is missing any of these, stop and write
+   the question into the task file (or ask once in chat) - do not guess a
+   layout or a proof.
 
-2. **Explore - build the job's dependency picture before reading logic.**
-   Start from `jcl/<JOB>.jcl`, not the COBOL. Record, in your notes:
-   - every step, `PGM=`, `COND`/`IF`, sort keys;
-   - every DD name -> dataset -> the `SELECT ... ASSIGN TO` it satisfies;
-   - every `COPY` and every `CALL` (follow into the subprogram);
-   - every `EXEC SQL` (or its stand-in paragraph) -> table -> DDL -> DCLGEN copybook;
-   - predecessors / successors from `schedules/` and what they consume.
-   Build and run the job as-is first (`scripts/build.sh && scripts/run_job.sh`);
-   note the MAXCC and confirm `compare.sh` passes on `main`. You are not
-   allowed to migrate a job you cannot run.
-
-3. **Specify - fill `docs/MIGRATION_SPEC_TEMPLATE.md`** into
-   `docs/specs/<JOB>-spec.md`. Rules:
-   - every business rule gets an id and a paragraph reference (evidence);
-   - describe **actual** behaviour, including anything that looks wrong -
-     list it under "observed defects: preserve" unless the ticket says to fix it;
-   - pay special attention to arithmetic order (round/floor/cap), COBOL
-     truncation vs `ROUNDED`, date-window inclusivity, and what each report
-     total counts;
-   - list edge cases you can see in the sample data and any you cannot.
-   Commit the spec on its own; it is reviewable independent of code.
-
-4. **Plan - post the target layout in the PR description and pause.** Map
-   each JCL step to Spring Batch constructs (tasklet for SORT, chunk step for
-   the program, tasklet for compare), each rule to a class/method, each table
-   to a repository interface with a CSV implementation now and a JDBC one
-   later. State what you will keep deliberately "ugly" to remain
-   byte-identical (report formatting, sequence allocation, truncation). Wait
-   for an OK if the ticket asks for one; otherwise continue.
-
-5. **Implement** under `java/` (Maven, Java 17, Spring Batch 5):
-   - fixed-width readers generated from the copybooks, not hand-guessed;
-   - one class per called subprogram, same inputs/outputs as the COMMAREA;
-   - `BigDecimal` with explicit scale and `RoundingMode.DOWN` where COBOL
-     truncates; never `double`;
-   - report writer produces the identical 132-column lines including
-     trailing-space behaviour of the COBOL runtime;
-   - exit code = the COBOL RETURN-CODE semantics.
-   No functional "improvements". If you believe something is a defect, it is
-   already in the spec; leave it.
-
-6. **Verify - equivalence is a diff.**
+2. **Baseline - run the legacy job before writing anything.**
    ```bash
-   scripts/run_job.sh --no-compare                       # COBOL -> work/
-   (cd java && mvn -q verify && java -jar target/<job>.jar --out ../work-java)
-   scripts/compare.sh work-java                          # must exit 0
+   scripts/build.sh
+   scripts/run_<job>.sh            # SORT -> program -> compare against goldens
+   tests/run_<job>_tests.sh
    ```
-   Iterate until `compare.sh` exits 0 for the report and every after-state
-   table. Then add the Java build + run + compare to `.github/workflows/ci.yml`
-   so both implementations are verified on every PR. Run the repo test suite
-   (`tests/run_tests.sh`) and add tests for anything new (e.g. a Java-side
-   test that pins the exit code).
+   Record MAXCC, record counts and the comparator verdict. You may not migrate a
+   job you cannot run, and you may not proceed if the baseline comparator does
+   not PASS on `main`.
 
-7. **Deliver.** Open the PR against `main`: summary, link to the spec, the
-   plan, the compare output pasted verbatim, and a short "kept deliberately"
-   list. Move the ticket to *In Review* with the PR link. Do not merge.
+3. **Explore from the JCL inward.** `jcl/<JOB>.jcl` -> steps, `COND`, sort
+   keys -> each DD -> dataset -> `SELECT ... ASSIGN` -> copybook -> `layouts/`
+   JSON. Then the program: validation order, sign handling (`SIGN LEADING
+   SEPARATE`, edited pictures), what each total counts, return-code rules.
+   Confirm every rule listed in the task file against `file:line`; add any you
+   find that the task file missed, under "observed behaviour to preserve".
 
-## Done when
+4. **Implement in a new directory** (`java/<job>/`, Java 17, Maven, Spring
+   Batch, no database unless the task says so). Rules:
+   - fixed-width writers: pad to LRECL, keep trailing spaces, `\n` line ends
+     as in this repo (record the host RECFM/encoding decision in the PR);
+   - money as `BigDecimal` with the copybook scale, never `double`;
+   - reproduce COBOL truncation / sign / edited-picture behaviour exactly;
+   - do **not** touch `cobol/`, `jcl/`, `data/`, `layouts/`, or the goldens.
 
-- `docs/specs/<JOB>-spec.md` committed with evidence per rule.
-- `scripts/compare.sh <java-out>` exits 0 on the sample data.
-- CI runs COBOL, Java and the compare and is green.
-- Ticket in *In Review* with PR + session links.
+5. **Run on identical inputs.** Same input files, same `RUNDATE`, output to
+   its own directory. Then:
+   ```bash
+   scripts/compare_<job>.sh <new-output-dir>
+   ```
+   Layer 1 bytes -> Layer 2 decoded fields -> Layer 3 keyed reconciliation ->
+   Layer 4 control totals. Money, counts and keys have zero tolerance.
+
+6. **Explain every difference, then fix it.** For each differing field: which
+   rule, which record, legacy value vs new value, root cause in your code.
+   Classify as *fixed* (default), *approved deviation* (only if the task file
+   says so, with the approver named) or *blocker*. Never edit, re-sort, trim or
+   re-encode a baseline to make it match. Repeat 5-6 until exit 0.
+
+7. **Regression harness.** `tests/run_<job>_tests.sh` must still pass
+   (proves the COBOL side is untouched). Add the Java run + comparator to CI
+   in the same workflow.
+
+8. **PR.** Description contains, pasted from this session's terminal (never
+   typed): the comparator tail for every output file, the harness summary, the
+   return-code table (sample / clean / empty / bad card), and the rule ->
+   class/method mapping. Then update the task file (or Jira) with the PR link
+   and leave the human decision - Verified / Done - to a human.
+
+## Stop conditions
+
+- Baseline comparator fails on `main`.
+- A layout in the task file disagrees with the copybook.
+- An unexplained difference remains after two fix passes.
+- The task asks to change behaviour ("while you're in there, fix ...") - that is
+  a separate task file and a separate PR.
+
+## Parallel - many jobs at once
+
+A parent session receives a list of task files and starts one child session
+per job with:
+
+```
+Follow playbooks/cobol-job-migration.md for docs/tasks/<JOB>.md. Report back
+the PR URL, the comparator verdict per output file and any stop condition hit.
+```
+
+The parent only collects results and never merges: each PR is reviewed with
+Devin Review and approved by a human who owns that job.
 
 ## Verification of the deliverable
 
-This repository is a batch estate with no web frontend; verification is the
-golden-master compare plus the test harness, not a browser walkthrough. Paste
-the compare output and the `tests/run_tests.sh` summary line in the PR so a
-reviewer can see the proof without re-running it.
+This estate is batch only - there is no web frontend to open, so the proof is
+the layered file comparison on identical inputs plus the regression harness,
+pasted verbatim into the PR. If a job in scope ever gains a UI (an operator
+console, a report viewer), the same rule applies in its shape: start it, walk
+its main pages before and after the change, and attach a screen recording as
+the evidence instead of describing it.
