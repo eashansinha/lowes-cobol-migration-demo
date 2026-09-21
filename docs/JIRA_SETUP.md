@@ -160,19 +160,17 @@ Expected result changes (only these; all other rows and totals identical)
 
 ## Sandbox tickets
 
-If a Jira integration is available in the Devin session, create the two
-tickets above in a **sandbox** project only (for example a personal `MFM`
-project in a Cognition-owned Jira site). Never create them in a customer's
-Jira. Record the resulting keys/URLs here:
+The two tickets above were created via the Atlassian MCP in the dedicated
+sandbox project `MFM` on cog-gtm.atlassian.net (see "Live sandbox" at the top
+of this document). Never create them in a customer's Jira.
 
 | Ticket | Key | URL |
 |--------|-----|-----|
-| Migrate PRCUPD01 to Java | _not created - see note below_ | |
-| Fix clearance floor rounding | _not created - see note below_ | |
+| Migrate PRCUPD01 to Java | `MFM-1` (alias MFM-101) | https://cog-gtm.atlassian.net/browse/MFM-1 |
+| Fix clearance floor rounding | `MFM-2` (alias MFM-102) | https://cog-gtm.atlassian.net/browse/MFM-2 |
 
 <!-- JIRA-STATUS -->
-Status as of the scaffold PR: see the PR description / final session report
-for whether a sandbox Jira project was available. If it was not, the
-definitions above are the source of truth and can be pasted into any Jira
-project by hand in under five minutes (board -> create project -> Kanban ->
-add the six columns -> create the two issues).
+If you demo against a different Jira site, the definitions above are the
+source of truth and can be pasted into any Jira project by hand in under five
+minutes (create project -> Kanban -> add the six columns -> create the two
+issues).
