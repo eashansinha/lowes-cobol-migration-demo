@@ -9,10 +9,14 @@ the same database after-state as the COBOL job on identical inputs.
 
 ## Procedure
 
-1. **Claim the ticket.** Move the Jira ticket to *In Progress* and comment with
-   this session's link. Read the ticket's acceptance criteria; if the repo,
-   job name or required proof is missing, ask once, then proceed with the
-   defaults below.
+1. **Claim the ticket.** Follow the repo skill `mfm-jira-board`
+   (`.agents/skills/mfm-jira-board/SKILL.md`): read the ticket and all its
+   comments, comment this session's link + one-line plan, move the ticket to
+   *In Progress*, and post one `EXPLORE / SPECIFY / PLAN / IMPLEMENT / VERIFY`
+   comment at the end of each step below. Read the ticket's acceptance
+   criteria; if the repo, job name or required proof is missing, ask once
+   (as a `QUESTION -` comment on the ticket), then proceed with the defaults
+   below.
 
 2. **Explore - build the job's dependency picture before reading logic.**
    Start from `jcl/<JOB>.jcl`, not the COBOL. Record, in your notes:

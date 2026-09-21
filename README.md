@@ -34,7 +34,8 @@ docs/DEMO_RUNBOOK.md          30-minute Devin demo script
 docs/JIRA_TO_DEVIN_DEMO_GUIDE.md  Jira ticket -> Devin session -> verified PR; estate replication; verification loop
 docs/JIRA_SETUP.md            "Mainframe Modernization" board + tickets MFM-101 / MFM-102
 docs/MIGRATION_SPEC_TEMPLATE.md  the "specify" artefact Devin produces per job
-playbooks/                    Devin playbook drafts: job migration, in-place COBOL maintenance
+playbooks/                    Devin playbook drafts: ask mode (!cobol_ask), job migration (!jcl_migrate), in-place fix (!cobol_fix)
+.agents/skills/               Repo skills Devin loads every session: mfm-jira-board (board protocol), cobol-ask (read-only analysis)
 ```
 
 ## Build and run locally
@@ -122,7 +123,8 @@ unload time. See the Q&A in `docs/DEMO_RUNBOOK.md`.
    oracle-first verification loop Devin must follow.
 4. `docs/MIGRATION_SPEC_TEMPLATE.md` - the artefact Devin fills in during
    **specify**.
-5. `playbooks/` - reusable Devin playbooks for migration and maintenance.
+5. `playbooks/` - reusable Devin playbooks: `!cobol_ask` (scoping only), `!jcl_migrate`, `!cobol_fix`.
+6. `.agents/skills/mfm-jira-board/SKILL.md` - how every session reads and updates the MFM Jira board.
 
 ## Licence
 

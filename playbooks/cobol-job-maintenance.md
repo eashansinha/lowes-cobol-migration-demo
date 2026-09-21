@@ -9,10 +9,14 @@ unchanged, and leaves the golden files describing the new behaviour.
 
 ## Procedure
 
-1. **Claim the ticket.** Move it to *In Progress*, comment the session link.
-   Extract from the ticket: program, paragraph, the defect/rule change, and
-   the expected output changes. If the ticket does not state expected values,
-   derive them from the rule text and write them down *before* coding.
+1. **Claim the ticket.** Follow the repo skill `mfm-jira-board`
+   (`.agents/skills/mfm-jira-board/SKILL.md`): read the ticket and all its
+   comments, comment the session link + one-line plan, move it to
+   *In Progress*, and post a phase comment (`EXPLORE / SPECIFY / IMPLEMENT /
+   VERIFY`) at the end of each step below. Extract from the ticket: program,
+   paragraph, the defect/rule change, and the expected output changes. If the
+   ticket does not state expected values, derive them from the rule text and
+   write them down *before* coding.
 
 2. **Prove the current behaviour first.** Build and run on `main`:
    ```bash
