@@ -1,0 +1,40 @@
+GLPOST01                DAILY GENERAL LEDGER POSTING - BATCH CONTROL REPORT                     RUN DATE 2026-09-21                 
+                                                                                                                                    
+BATCH CONTROL                                                                                                                       
+  BATCH ID     LINES  POSTED  REJECT           DEBIT TOTAL          CREDIT TOTAL  STATUS                                            
+  AP092101         8       7       1            208,075.50            208,075.50  BALANCED                                          
+  AR092101         8       5       3             60,710.99             60,710.99  BALANCED                                          
+  MAN09211         9       6       3             99,995.25            112,995.25  OUT OF BALANCE                                    
+  PAY09211         6       4       2            422,250.00            422,250.00  BALANCED                                          
+                                                                                                                                    
+POSTED BY ACCOUNT TYPE                                                                                                              
+  ACCOUNT TYPE   LINES           DEBIT TOTAL          CREDIT TOTAL             NET SIGNED                                           
+  A ASSET           10            183,210.99            397,495.25            214,284.26-                                           
+  L LIABILITY        7            270,500.00            361,776.32             91,276.32                                            
+  Q EQUITY           1                  0.00              1,000.00              1,000.00                                            
+  R REVENUE          1                  0.00             40,010.17             40,010.17                                            
+  E EXPENSE          3            314,125.50                  0.00            314,125.50                                            
+                                                                                                                                    
+EXCEPTIONS BY REASON                                                                                                                
+  REASON                                 LINES       REJECTED AMOUNT                                                                
+  E001 ACCOUNT NOT ON MASTER                 1                745.25                                                                
+  E002 ACCOUNT CLOSED                        1                500.00                                                                
+  E003 ACCOUNT FROZEN - NO POSTING           1             18,200.00                                                                
+  E004 INVALID DR/CR CODE                    1             12,000.00                                                                
+  E005 ZERO AMOUNT                           1                  0.00                                                                
+  E006 NON-USD CURRENCY SUSPENDED            2              5,000.00                                                                
+  E007 POST DATE OUT OF PERIOD               2              2,500.00                                                                
+                                                                                                                                    
+RUN TOTALS                                                                                                                          
+  ACCOUNTS ON MASTER                  15                                                                                            
+  TRANSACTIONS READ                   31                                                                                            
+  TRANSACTIONS POSTED                 22                                                                                            
+  TRANSACTIONS REJECTED                9                                                                                            
+  BATCHES READ                         4                                                                                            
+  BATCHES OUT OF BALANCE               1                                                                                            
+  POSTED DEBIT TOTAL                        767,836.49                                                                              
+  POSTED CREDIT TOTAL                       800,281.74                                                                              
+  POSTED NET SIGNED                         232,127.73                                                                              
+  REJECTED DEBIT TOTAL                       23,195.25                                                                              
+  REJECTED CREDIT TOTAL                       3,750.00                                                                              
+  HIGHEST RETURN CODE                  4                                                                                            

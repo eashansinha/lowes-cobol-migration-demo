@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# build.sh - compile the PRCUPD01 load module with GnuCOBOL.
+# build.sh - compile the batch load modules with GnuCOBOL.
 #
 # Mainframe equivalent: the IGYWCL compile/link PROC producing
-# PRCLIB.LOADLIB(PRCUPD01) with PRCRGN01 statically linked.
+#   PRC.PROD.LOADLIB(PRCUPD01) with PRCRGN01 statically linked
+#   GL.PROD.LOADLIB(GLPOST01)
 #
-# Usage: scripts/build.sh            -> bin/PRCUPD01
+# Usage: scripts/build.sh            -> bin/PRCUPD01 bin/GLPOST01
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -27,5 +28,10 @@ echo "build.sh: compiling PRCUPD01 + PRCRGN01 -> $BIN/PRCUPD01"
 cobc -x -Wall -I "$CPY" \
      -o "$BIN/PRCUPD01" \
      "$SRC/PRCUPD01.cbl" "$SRC/PRCRGN01.cbl"
+
+echo "build.sh: compiling GLPOST01 -> $BIN/GLPOST01"
+cobc -x -Wall -I "$CPY" \
+     -o "$BIN/GLPOST01" \
+     "$SRC/GLPOST01.cbl"
 
 echo "build.sh: OK"

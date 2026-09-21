@@ -1,0 +1,24 @@
+{
+  "name": "GLPOSTED",
+  "copybook": "cobol/copybooks/GLPSTREC.cpy",
+  "recfm": "FB",
+  "lrecl": 120,
+  "encoding": "ASCII (EBCDIC on the mainframe; convert one direction before comparing)",
+  "key": ["TRAN-ID"],
+  "fields": [
+    {"name": "POST-SEQ",    "start": 1,   "length": 7,  "type": "num"},
+    {"name": "TRAN-ID",     "start": 8,   "length": 10, "type": "char"},
+    {"name": "POST-DATE",   "start": 18,  "length": 8,  "type": "num"},
+    {"name": "ACCT-NO",     "start": 26,  "length": 10, "type": "char"},
+    {"name": "ACCT-TYPE",   "start": 36,  "length": 1,  "type": "char"},
+    {"name": "COST-CTR",    "start": 37,  "length": 6,  "type": "char"},
+    {"name": "SIGNED-AMT",  "start": 43,  "length": 14, "type": "signed-leading-separate", "scale": 2, "money": true},
+    {"name": "DR-CR",       "start": 57,  "length": 1,  "type": "char"},
+    {"name": "CURRENCY",    "start": 58,  "length": 3,  "type": "char"},
+    {"name": "SOURCE",      "start": 61,  "length": 4,  "type": "char"},
+    {"name": "BATCH-ID",    "start": 65,  "length": 8,  "type": "char"},
+    {"name": "DESCRIPTION", "start": 73,  "length": 30, "type": "char"},
+    {"name": "RUN-DATE",    "start": 103, "length": 8,  "type": "num"},
+    {"name": "FILLER",      "start": 111, "length": 10, "type": "char"}
+  ]
+}

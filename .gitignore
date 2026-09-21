@@ -1,10 +1,11 @@
 # build + run artefacts
 bin/
 work/
-work-tests/
+work-*/
 work-*.log
 *.o
 *.so
 *.dylib
 *.c.h
 *.c.l.h
+__pycache__/

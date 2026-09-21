@@ -1,25 +1,15 @@
 ---
 name: cobol-ask
-description: Read-only "ask mode" for a COBOL/JCL question or a Jira ticket in this repo. Answer with file:line citations and a scoped plan; never edit, build, open a PR or move the ticket. Use when a Jira comment or ticket asks a question, carries the !cobol_ask label, or the task says explore/scope/explain.
-allowed-tools: Read, Grep, ListDir, getJiraIssue, searchJiraIssuesUsingJql, addCommentToJiraIssue
-argument-hint: <question or MFM ticket key>
+description: Read-only "ask mode" for a COBOL/JCL question in this repo (Ask Devin / DeepWiki, or a Jira comment once the integration is enabled). Answer with file:line citations; when asked to plan, produce a docs/tasks/<JOB>.md-shaped task ending with the Devin prompt. Never edit, build, open a PR or move a ticket. Use when the request says explain / explore / scope / plan.
+allowed-tools: Read, Grep, ListDir
+argument-hint: <question or job name>
 ---
 
 # COBOL ask mode (no side effects)
 
 You are answering, not implementing. No edits, no shell, no PR, no Jira
-transitions. Follow `mfm-jira-board` step 1 for reading the ticket (including
-its truncated-comments check); skip its opening comment, phase comments and
-transitions - the one answer comment below is your only Jira write. Jira is
-the `atlassian` MCP server and the only Jira tools you may use are the three
-in `allowed-tools`: `getJiraIssue` (with `comment` in `fields`; check its
-`total` against the comments returned), `searchJiraIssuesUsingJql` and
-`addCommentToJiraIssue` - never `transitionJiraIssue`, `editJiraIssue` or
-`createJiraIssue`.
-
-If the question carries no ticket key, no ticket is in scope: answer the
-question as asked from the repo, in the session, say so, and post nothing to
-Jira; do not pick a ticket from the board on the asker's behalf.
+transitions. Follow `mfm-jira-board` for reading the ticket; skip its
+transition steps.
 
 ## Answer shape
 
@@ -39,22 +29,13 @@ Start from the JCL and walk outward; cite everything.
    (truncation vs ROUNDED, sign handling, COMP-3 widths, sort order), or an
    unresolved question. Label each "observed - preserve unless a ticket says
    fix".
-6. **If asked to scope** - a plan of <=10 steps for the *implementing*
-   session to run later (you run none of them now), mapped onto the repo's
-   loop (baseline `scripts/build.sh && scripts/run_job.sh &&
-   scripts/compare.sh` -> explore -> spec -> plan -> implement -> compare on
-   the same inputs -> CI gate -> PR), the golden files that would change, and
-   a confidence estimate: high / medium / low with one sentence why.
-
-Finish:
-
-- Ticket in scope: post the answer as the **one and only** comment on the
-  ticket (`addCommentToJiraIssue`) and end it with the same sentence as
-  `playbooks/cobol-ask.md`: "To implement, add the `!jcl_migrate` (migration)
-  or `!cobol_fix` (in-place change) label to this ticket, or start a session
-  from this comment."
-- No ticket in scope: end the session answer with "To implement, create or
-  pick an MFM ticket for this, then add the `!jcl_migrate` or `!cobol_fix`
-  label to it or start a session from it."
+6. **If asked to plan / scope** - write the task in the shape of
+   `docs/tasks/GLPOST01.md`: issue, findings with citations, input/output
+   files with layouts, the reproduction command (`scripts/build.sh &&
+   scripts/run_<job>.sh`), how parity is verified (bytes -> decoded fields ->
+   keyed reconciliation -> control totals, zero tolerance on money, counts,
+   keys), acceptance criteria, blockers, and finish with the exact prompt for
+   the Devin session (pointing at the task file and
+   `playbooks/cobol-job-migration.md`). Same text is what goes into Jira.
 
 Do not start the implementation session yourself.

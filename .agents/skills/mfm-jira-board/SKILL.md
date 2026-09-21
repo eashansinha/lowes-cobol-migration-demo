@@ -1,86 +1,72 @@
 ---
 name: mfm-jira-board
-description: Working protocol for the "Mainframe Modernization" (MFM) Jira board. Use in every session that touches a COBOL/JCL job in this repo - migration (!jcl_migrate), in-place fix (!cobol_fix) or read-only analysis (!cobol_ask) - to read the ticket, report at each phase and move the ticket only through the transitions Devin owns.
+description: Task-tracking protocol for COBOL/JCL work in this repo. The ticket is a Markdown task file under docs/tasks/ (or, once the Jira integration is enabled, an issue on the "Mainframe Modernization" MFM board). Use in every session that migrates, fixes or analyses a job - read the task first, log each phase, report only numbers you produced, and leave Verified/Done to humans.
 ---
 
-# MFM Jira board protocol
+# Task protocol (Markdown task file today, MFM Jira board once enabled)
 
-Board: https://cog-gtm.atlassian.net/jira/software/projects/MFM/boards/2594
-(project key `MFM`, cog-gtm.atlassian.net). Docs use aliases: MFM-101 = `MFM-1`
-(migrate `PRCUPD01` to Java), MFM-102 = `MFM-2` (clearance price-floor fix).
-
-The ticket is the source of truth for scope and acceptance criteria; the repo is
+The task is the source of truth for scope and acceptance criteria; the repo is
 the source of truth for behaviour. When they disagree, write the disagreement
-on the ticket - do not pick one silently.
+into the task - do not pick one silently.
+
+Where the task lives:
+- **Markdown** - `docs/tasks/<JOB>.md` (exemplar: `docs/tasks/GLPOST01.md`).
+  Produced by an Ask Devin planning conversation; the same content is what
+  goes into a Jira issue later.
+- **Jira** (when connected) - board
+  https://cog-gtm.atlassian.net/jira/software/projects/MFM/boards/2594, project
+  `MFM`. Columns `Backlog -> Ready for Devin -> In Progress -> In Review ->
+  Verified -> Done`. Devin owns `Ready for Devin -> In Progress -> In Review`
+  only.
 
 ## 1. Before touching code
 
-Jira is reached through the `atlassian` MCP server (cog-gtm.atlassian.net):
-`getJiraIssue` (pass `fields: ["*all", "comment"]` to get the description
-and every comment), `searchJiraIssuesUsingJql`, `addCommentToJiraIssue`,
-`getTransitionsForJiraIssue`, `transitionJiraIssue`. No other Jira tools.
+1. Read the whole task (Markdown file, or Jira issue + **all** comments).
+   Extract: job/program, input and output DDs with layouts, the reproduction
+   command, the proof required, values the task says will change, and every
+   line marked "preserve".
+2. If anything in that list is missing, ask once - as a `QUESTION -` line in
+   the task file's `## Session log` (or a Jira comment) - then continue with
+   whatever does not depend on the answer. Never invent a layout or a proof.
+3. Log the start: session link + one-line plan. Jira: also move
+   `Ready for Devin -> In Progress`. Read-only analysis: never transition.
 
-1. Read the ticket and **all** comments (`getJiraIssue` with `comment` in
-   `fields`). The embedded `comment` object is paginated (`startAt`,
-   `maxResults`, `total`): if `total` is larger than the number of comments
-   returned, the history is incomplete and the server has no paginated
-   comment reader - do not proceed as if you had read everything; comment
-   `BLOCKED - ticket has <total> comments, only <n> readable via MCP; please
-   summarise the rest or trim the thread` and stop (in ask mode, say this in
-   the session instead). Extract: job/program, paragraph, required proof, rows
-   or values the ticket says will change, and anything marked "preserve".
-2. If the session was started with a question rather than a ticket (a `@Devin`
-   comment or `!cobol_ask`), find the ticket key in the comment or in the
-   issue the comment was posted on. If there is none, no ticket is in scope:
-   answer the question as asked from the repo, in the session, say that no
-   ticket was in scope, skip step 3 and every Jira comment or transition in
-   this protocol, and never pick a ticket off the board on the asker's behalf.
-3. Post one comment (`addCommentToJiraIssue`): session link + one-line plan +
-   the phases you will report on. Move `Ready for Devin -> In Progress`
-   (`getTransitionsForJiraIssue` then `transitionJiraIssue`). For
-   `!cobol_ask` / read-only work: skip this step and section 2 entirely - no
-   transition, no opening or phase comments; the single answer comment
-   defined in `cobol-ask` is the only Jira write.
+## 2. During the work - one log entry per phase
 
-## 2. During the work - one comment per phase
-
-Post a short comment (5-15 lines, no prose padding) at the end of each phase.
-Use the phase word as the first line so the board reads like a log:
+Append to `## Session log` in the task file (or one Jira comment per phase).
+First word is the phase so the log reads as a timeline:
 
 ```
-EXPLORE  - JCL steps, DD->file->copybook map, downstream jobs, DB2 tables touched
-SPECIFY  - link/path to docs/specs/<JOB>.md; count of rules; list of observed
-           defects and whether each is "preserve" (default) or "fix" (ticket says so)
-PLAN     - target layout in <=10 lines; STOP here and wait for a human "go"
-           on MFM-1 (migration). MFM-2 (fix) may continue.
-IMPLEMENT- files changed, commit SHA, build result
-VERIFY   - paste the tail of scripts/compare.sh, MAXCC, tests passed/failed,
-           and the exact golden-file diff the ticket allowed
+BASELINE  - build + legacy run: MAXCC, record counts, comparator verdict on main
+EXPLORE   - JCL steps, DD -> file -> copybook -> layouts/*.json, downstream jobs
+IMPLEMENT - files added, build result (nothing under cobol/ jcl/ data/ layouts/ changed)
+PARITY    - comparator tail per output file; every difference explained and
+            classified fixed / approved deviation / blocker
+VERIFY    - regression harness summary, return-code table, CI status
 ```
 
 Rules:
-- Every value you claim on the ticket must come from a command you ran in this
-  session (compare output, MAXCC, test count). Never type an expected number.
-- Quote `file:line` or paragraph names for every business rule you mention.
-- A new defect you find is a **finding**, recorded on the ticket under SPECIFY
-  as "observed defect: preserve" - it is not fixed unless the ticket says so
-  and it is not silently corrected in the migration. Offer a follow-up ticket.
-- Questions for humans go on the ticket as a comment starting `QUESTION -`
-  and you keep working on everything that does not depend on the answer.
+- Every number you log came from a command you ran in this session. Never type
+  an expected value.
+- Cite `file:line` or paragraph names for every business rule you mention.
+- Behaviour that looks wrong is a **finding**: log it as "observed behaviour:
+  preserve" and reproduce it. It is not fixed in a migration; offer a separate
+  task.
+- Never edit, re-sort, trim or re-encode a baseline file to make a comparison
+  pass. An unexplained difference is a blocker.
 
 ## 3. Finishing
 
-1. Open the PR. Its body carries the VERIFY evidence (compare output, MAXCC,
-   before/after diff of any golden file the ticket allowed to change).
-2. Comment on the ticket: PR URL, head SHA, CI status, and the one-line
-   verification verdict. Move `In Progress -> In Review`.
-3. Never move a ticket to `Verified` or `Done`; never reopen or edit the
-   ticket description; never create tickets in projects other than `MFM`.
-4. If blocked (no parity, missing input, ambiguous rule): leave the ticket in
-   `In Progress`, comment `BLOCKED -` with the diff or question, and stop.
+1. Open the PR. Its body carries the PARITY and VERIFY evidence, pasted.
+2. Log the PR URL, head SHA, CI status and the one-line verdict. Jira: move
+   `In Progress -> In Review`.
+3. Never mark the task Verified or Done, never edit the original task text
+   above the session log, never create Jira issues outside `MFM`.
+4. If blocked: log `BLOCKED -` with the diff or question and stop; leave the
+   task In Progress.
 
 ## 4. Follow-ups
 
-`@Devin` comments on a ticket with an existing session are forwarded to that
-session. Treat them as new instructions scoped to that ticket; re-run VERIFY
-and post a fresh VERIFY comment after any code change.
+New instructions on the same task (a chat message, or an `@Devin` Jira comment
+forwarded to this session) are scoped to that task. After any code change,
+re-run the comparator and harness and log a fresh PARITY / VERIFY entry.
