@@ -1,0 +1,31 @@
+# NIGHTLY MERCHANDISING BATCH STREAM - PRICING / INVENTORY (extract)
+# Scheduler manifest (CA-7 / Control-M style, simplified).
+#
+# Columns: JOB  START  MAXRUN  PREDECESSORS (job:maxcc)  NOTES
+#
+# All times America/New_York. Stream starts after the store-close
+# transaction sweep (STRCLOS1) completes.
+
+ITMUNLD1   00:45   00:20   STRCLOS1:0                 Item master VSAM -> QSAM unload (PRC.PROD.ITEMMAST.UNLOAD)
+PRMEXTR1   01:00   00:15   -                          Promo planner extract -> PRC.PROD.PROMO.FEED(+1)
+STRGNUNL   01:00   00:05   -                          DB2 unload PRCDB.STORE_REGION -> CSV (weekly refresh, Sun)
+PRCUPD01   01:30   00:30   ITMUNLD1:0 PRMEXTR1:0      *** DEMO JOB *** promo price update; MAXCC 4 = warnings OK
+INVREPL01  02:15   00:45   PRCUPD01:4                 Replenishment; reads PRCUPD01 ITEM_PRICE after-state
+PRCRPT02   02:15   00:10   PRCUPD01:4                 Distribute PRCRPT audit report to Merch Pricing (email/SAR)
+ITMRPT02   02:30   00:20   ITMUNLD1:0                 Item master exception report (independent of pricing)
+STRXMIT1   04:00   00:30   INVREPL01:0 PRCRPT02:0     Store order transmission (MQ to store systems)
+PRCARCH1   05:00   00:15   STRXMIT1:0                 Archive PRICE_HIST after-state, GDG roll
+
+# Dependency graph
+#
+#   STRCLOS1 --> ITMUNLD1 --+--> PRCUPD01 --+--> INVREPL01 --+--> STRXMIT1 --> PRCARCH1
+#                           |               |                |
+#   PRMEXTR1 ---------------+               +--> PRCRPT02 ---+
+#                           |
+#                           +--> ITMRPT02
+#
+# Restart notes
+#   PRCUPD01 abend (MAXCC >= 8): fix and rerun from STEP010; ITEM_PRICE after-state
+#   is only written on successful STEP020 completion so a rerun is safe.
+#   INVREPL01 must never run against a stale ITEM_PRICE after-state; PREDCHK
+#   step enforces this when the scheduler dependency is bypassed manually.

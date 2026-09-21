@@ -1,0 +1,10 @@
+# build + run artefacts
+bin/
+work/
+work-tests/
+work-*.log
+*.o
+*.so
+*.dylib
+*.c.h
+*.c.l.h
