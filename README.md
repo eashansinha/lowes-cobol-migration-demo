@@ -37,7 +37,7 @@ ACCTMAST.dat (chart of accounts, FB 60) +--> STEP010 SORT -> STEP020 GLPOST01 --
 sudo apt-get install -y gnucobol        # GnuCOBOL 3.x (Ubuntu 22.04 ships 3.1.2)
 scripts/build.sh                        # -> bin/GLPOST01 (and bin/PRCUPD01)
 scripts/run_glpost01.sh                 # SORT -> GLPOST01 -> compare_glpost01.sh ; exit = MAXCC (4 expected)
-tests/run_glpost01_tests.sh             # 56-assertion regression harness (runs in CI)
+tests/run_glpost01_tests.sh             # 64-assertion regression harness (runs in CI)
 ```
 
 Sample run: 31 journal lines in 4 batches -> 22 posted, 9 exceptions (one per

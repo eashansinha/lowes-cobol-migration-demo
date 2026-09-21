@@ -71,6 +71,21 @@ Machine-readable layouts for the comparator: `layouts/GLTRANS.json`,
   the job.
 - Report batch totals print unsigned (`Z(3),ZZZ,ZZZ,ZZZ,ZZ9.99`); the per-type
   NET column carries a trailing minus (e.g. `214,284.26-`).
+- `2210-LOOKUP-ACCOUNT` (522-533) `SEARCH`es all 300 `WS-ACCT-ENTRY` slots,
+  not just the `WS-ACCT-COUNT` loaded ones; unloaded slots are spaces. A line
+  whose `GLT-ACCT-NO` is all spaces therefore matches the first empty slot and
+  is posted (blank status passes E002/E003; blank type falls through the type
+  classification) instead of being rejected E001. Not in the sample data; the
+  Java job must reproduce the same outcome on identical input, and the finding
+  goes on a separate maintenance task.
+- `WS-FS-RPT` is checked only after `OPEN` (338); none of the 27
+  `WRITE REPORT-REC` statements test it, so a failed report write does not
+  change the return code. Not reproducible with the sample data.
+- `jcl/GLPOST01.jcl` STEP030 (IEBCOMPR, `COND=(4,LT,STEP020)`) runs whenever
+  STEP020 ends 0 or 4, i.e. on every normal run, although the comments call it
+  regression-only, and it compares GLPOSTED only. `scripts/run_glpost01.sh`
+  emulates it as the three-file `compare_glpost01.sh`. Kept as-is: the JCL is
+  the legacy artefact being migrated, not the migration.
 
 **Downstream** - `GLPOSTED.DAILY(+1)` is consumed by the GL close jobs;
 `GLEXCEPT.DAILY(+1)` feeds the suspense-clearing workflow. Neither is in this repo.
@@ -80,7 +95,7 @@ Machine-readable layouts for the comparator: `layouts/GLTRANS.json`,
 ```bash
 scripts/build.sh                 # cobc -> bin/GLPOST01
 scripts/run_glpost01.sh          # SORT -> GLPOST01 -> compare_glpost01.sh ; MAXCC=4 expected
-tests/run_glpost01_tests.sh      # 56-assertion harness (also runs in CI)
+tests/run_glpost01_tests.sh      # 64-assertion harness (also runs in CI)
 ```
 
 Sample input: `data/input/GLTRANS.dat` (31 lines, 4 batches) +

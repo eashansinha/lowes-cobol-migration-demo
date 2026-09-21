@@ -1,5 +1,11 @@
 # Jira setup: "Mainframe Modernization" board
 
+> **Status (2026-09-21):** Jira is optional for the demo; the task source is
+> `docs/tasks/<JOB>.md` and the only org playbook is `!cobol_job_migrate`
+> (`playbooks/cobol-job-migration.md`). `!jcl_migrate`, `!cobol_fix` and
+> `!cobol_ask` no longer exist in the Devin org. This document remains the
+> reference for the sandbox board and its tickets.
+
 This document defines the Jira board and the two tickets used in the demo. The
 tickets are written so Devin can pick them up directly from the Jira
 integration (or be pasted as a prompt) without further clarification.
@@ -36,7 +42,7 @@ linked a session (it does not move the ticket by itself).
 | [MFM-6](https://cog-gtm.atlassian.net/browse/MFM-6) | Done | Task | no | Decision: DB2 tables as CSV before/after dumps |
 | [MFM-7](https://cog-gtm.atlassian.net/browse/MFM-7) | Done | Bug | no | REGION OVERRIDE total counted rejected NC BOGO rows (6 -> 5) |
 | [MFM-8](https://cog-gtm.atlassian.net/browse/MFM-8) | Done | Bug | no | HIST_SEQ taken from last row instead of max; capacity guards |
-| [MFM-9](https://cog-gtm.atlassian.net/browse/MFM-9) | In Review | Task | yes (eashan-dev) | Devin playbooks: `!jcl_migrate` and `!cobol_fix` |
+| [MFM-9](https://cog-gtm.atlassian.net/browse/MFM-9) | In Review | Task | yes (eashan-dev) | Devin playbooks (since replaced by the single `!cobol_job_migrate`) |
 | [MFM-1](https://cog-gtm.atlassian.net/browse/MFM-1) | In Progress | Story | yes (devin-gtm) | Migrate PRCUPD01 to Java (Spring Batch) with equivalence verification (MFM-101) |
 | [MFM-2](https://cog-gtm.atlassian.net/browse/MFM-2) | In Progress | Bug | yes (devin-gtm) | Fix clearance price-floor rounding defect (MFM-102) |
 | [MFM-10](https://cog-gtm.atlassian.net/browse/MFM-10) | Backlog | Bug | no | WC lumber 15% cap defeated by the .x9 round-down (SKU 10012233 -> 3.59) |
@@ -49,7 +55,8 @@ MFM-10 is the live "pick up a fresh ticket" candidate for the demo: it is a
 real, unfixed defect with a predicted one-row golden change. It has no `devin`
 label yet, so no session exists for it; start one from the ticket with the
 path B prompt in `JIRA_TO_DEVIN_DEMO_GUIDE.md` using the MFM-10 URL and
-`!cobol_fix` (it is a Bug, not a migration), or add the label live.
+no playbook (it is a Bug, not a migration - follow the `mfm-jira-board`
+skill from a task file), or add the `devin` label live.
 
 ## Board
 
@@ -59,12 +66,12 @@ path B prompt in `JIRA_TO_DEVIN_DEMO_GUIDE.md` using the MFM-10 URL and
 | Issue types | Story (migration work), Bug (in-place fixes), Task |
 | Columns | `Backlog` -> `Ready for Devin` -> `In Progress` -> `In Review` -> `Verified` -> `Done` |
 | WIP limit | `In Progress` = 3 (one Devin session per ticket) |
-| Devin trigger (ask) | Label `!cobol_ask`, or comment `@Devin !cobol_ask <question>`: read-only analysis + scoped plan as a comment, no code, no transition. Also the default playbook, so assigning to the Devin user / label `devin` is ask mode |
-| Devin trigger (work) | Label `!jcl_migrate` (Story) or `!cobol_fix` (Bug), or the automation *status = Ready for Devin* (not yet verified on the sandbox; the only verified trigger is the `devin` label at creation): full session with the ticket as the task |
-| Board protocol | Repo skill `.agents/skills/mfm-jira-board/SKILL.md` + pinned knowledge note: read ticket first, phase comments `EXPLORE / SPECIFY / PLAN / IMPLEMENT / VERIFY`, evidence on the ticket |
+| Devin trigger (ask) | Comment `@Devin <question>` phrased as explain / plan: the repo skill `cobol-ask` keeps it read-only - analysis + task-file-shaped plan as a comment, no code, no transition |
+| Devin trigger (work) | Label `!cobol_job_migrate` (migration Story; Bugs have no playbook and are started by hand), or the automation *status = Ready for Devin* (not yet verified on the sandbox; the only verified trigger is the `devin` label at creation): full session with the ticket as the task |
+| Board protocol | Repo skill `.agents/skills/mfm-jira-board/SKILL.md` + pinned knowledge note: read ticket first, phase comments `BASELINE / EXPLORE / IMPLEMENT / PARITY / VERIFY`, evidence on the ticket |
 | Devin transitions | Devin moves the ticket `Ready for Devin -> In Progress` when it starts and `In Progress -> In Review` when the PR is open. Humans move `In Review -> Verified -> Done` |
 | Required fields | Repository (`eashansinha/lowes-cobol-migration-demo`), Job name, Acceptance criteria |
-| Labels | `cobol`, `jcl`, `db2`, `migration`, `maintenance`, `devin`, `!cobol_ask`, `!jcl_migrate`, `!cobol_fix` |
+| Labels | `cobol`, `jcl`, `db2`, `migration`, `maintenance`, `devin`, `!cobol_job_migrate` |
 
 Column semantics:
 

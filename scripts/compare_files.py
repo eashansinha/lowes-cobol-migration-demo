@@ -3,10 +3,12 @@
 
 Given a BASELINE file (what the COBOL job wrote), a TARGET file (what the
 candidate implementation wrote) and a record layout, report parity in four
-layers and exit 0 only when the files are identical:
+layers and exit 0 only when the two byte streams are identical (record bytes,
+record count, line endings and terminal newline included):
 
   Layer 1  bytes     record counts, then per-record byte equality by position;
-                     every differing byte range is attributed to a field.
+                     every differing byte range is attributed to a field;
+                     stream-level drift (length, final newline, CR) is named.
   Layer 2  fields    every differing field decoded with the layout
                      (alphanumeric, unsigned/zoned numeric, sign-leading-separate)
                      and shown as baseline value vs target value.
@@ -85,14 +87,34 @@ def key_of(layout, rec):
 
 
 # ----------------------------------------------------------------- readers
-def read_records(path, lrecl):
+def read_bytes(path):
     with open(path, "rb") as fh:
-        data = fh.read()
+        return fh.read()
+
+
+def read_records(path, lrecl):
+    data = read_bytes(path)
     recs = data.decode("latin-1").split("\n")
     if recs and recs[-1] == "":
         recs.pop()
     bad = [i + 1 for i, r in enumerate(recs) if len(r) != lrecl]
-    return recs, bad
+    return data, recs, bad
+
+
+def stream_diffs(base, targ):
+    """Byte-stream differences that record splitting cannot see: length,
+    terminal newline, CR characters."""
+    notes = []
+    if len(base) != len(targ):
+        notes.append(f"stream length {len(base)} vs {len(targ)} bytes")
+    if base.endswith(b"\n") != targ.endswith(b"\n"):
+        notes.append("final newline present in " + ("baseline only" if base.endswith(b"\n") else "target only"))
+    if (b"\r" in base) != (b"\r" in targ):
+        notes.append("CR characters in " + ("baseline only" if b"\r" in base else "target only"))
+    return notes
+
+
+MISSING = "\x00"      # pads the shorter record so a length mismatch is a diff, not a crash
 
 
 # ----------------------------------------------------------------- layers
@@ -106,11 +128,13 @@ def layer1_bytes(layout, base, targ, max_diffs, out):
         if diffs > max_diffs:
             continue
         ranges = []
+        n = max(len(b), len(t))
+        bp, tp = b.ljust(n, MISSING), t.ljust(n, MISSING)
         j = 0
-        while j < len(b):
-            if b[j] != t[j]:
+        while j < n:
+            if bp[j] != tp[j]:
                 k = j
-                while k < len(b) and b[k] != t[k]:
+                while k < n and bp[k] != tp[k]:
                     k += 1
                 f = field_at(layout, j + 1)
                 ranges.append((j + 1, k, f["name"] if f else "FILLER"))
@@ -118,6 +142,8 @@ def layer1_bytes(layout, base, targ, max_diffs, out):
             else:
                 j += 1
         desc = ", ".join(f"cols {s}-{e} ({n})" for s, e, n in ranges)
+        if len(b) != len(t):
+            desc += f"; length {len(b)} vs {len(t)}"
         out.append(f"  record {i:>6}: {desc}")
     if len(base) != len(targ):
         out.append(f"  record count differs by {len(targ) - len(base):+d}; positional differences after the "
@@ -204,8 +230,8 @@ def layer4_controls(layout, base, targ, out):
 def compare_fixed(args):
     layout = load_layout(args.layout)
     lrecl = layout["lrecl"]
-    base, bad_b = read_records(args.baseline, lrecl)
-    targ, bad_t = read_records(args.target, lrecl)
+    raw_b, base, bad_b = read_records(args.baseline, lrecl)
+    raw_t, targ, bad_t = read_records(args.target, lrecl)
     out = [f"compare_files.py  layout={layout['name']} LRECL={lrecl}",
            f"  baseline {args.baseline}", f"  target   {args.target}"]
     if bad_b:
@@ -213,7 +239,9 @@ def compare_fixed(args):
     if bad_t:
         out.append(f"  TARGET records not LRECL {lrecl}: {bad_t[:10]} (RECFM/LRECL contract broken)")
     diffs = layer1_bytes(layout, base, targ, args.max_diffs, out)
-    identical = diffs == 0 and len(base) == len(targ) and not bad_t
+    for note in stream_diffs(raw_b, raw_t):
+        out.append(f"  STREAM {note}")
+    identical = raw_b == raw_t
     if not identical:
         if len(base) == len(targ):
             pairs = [(f"record {i}", b, t) for i, (b, t) in enumerate(zip(base, targ), start=1)]
@@ -231,17 +259,18 @@ def compare_fixed(args):
 
 
 def compare_text(args):
-    with open(args.baseline, "rb") as fh:
-        b = fh.read().decode("latin-1").split("\n")
-    with open(args.target, "rb") as fh:
-        t = fh.read().decode("latin-1").split("\n")
+    raw_b, raw_t = read_bytes(args.baseline), read_bytes(args.target)
+    b = raw_b.decode("latin-1").split("\n")
+    t = raw_t.decode("latin-1").split("\n")
     out = ["compare_files.py  text report", f"  baseline {args.baseline}", f"  target   {args.target}",
            f"Layer 1 - lines: baseline {len(b)} lines, target {len(t)} lines"]
     diffs = [i for i, (x, y) in enumerate(zip(b, t), start=1) if x != y]
     for i in diffs[:args.max_diffs]:
         out.append(f"  line {i:>4} baseline | {b[i - 1].rstrip()}")
         out.append(f"  line {i:>4} target   | {t[i - 1].rstrip()}")
-    identical = not diffs and len(b) == len(t)
+    for note in stream_diffs(raw_b, raw_t):
+        out.append(f"  STREAM {note}")
+    identical = raw_b == raw_t
     out.append("  IDENTICAL" if identical else f"  {len(diffs)} differing lines")
     out.append(f"RESULT report: {'IDENTICAL' if identical else 'DIFFERENT'}")
     print("\n".join(out))

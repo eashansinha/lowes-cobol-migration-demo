@@ -142,6 +142,30 @@ assert_grep "layer 2 decodes the changed field"       "$TMP/diverge.log" 'key T0
 assert_grep "layer 4 flags the money total"           "$TMP/diverge.log" 'sum SIGNED-AMT +232127\.73 +232872\.98  DIFFERS'
 assert_grep "verdict is DIFFERENT"                    "$TMP/diverge.log" 'RESULT GLPOSTED: DIFFERENT'
 
+echo "== G11 file-parity tool: the verdict is the byte stream, not the record list"
+mkdir -p "$TMP/stream"
+head -c -1 "$ROOT/data/expected/GLPOST01/GLEXCEPT.dat" > "$TMP/stream/nonl.dat"
+"$ROOT/scripts/compare_files.py" --layout "$ROOT/layouts/GLEXCEPT.json" \
+    --baseline "$ROOT/data/expected/GLPOST01/GLEXCEPT.dat" --target "$TMP/stream/nonl.dat" \
+    > "$TMP/stream/nonl.log" 2>&1
+assert_eq "missing final newline -> exit 8" "8" "$?"
+assert_grep "missing final newline is named"  "$TMP/stream/nonl.log" 'STREAM final newline present in baseline only'
+assert_no_grep "missing final newline is not IDENTICAL" "$TMP/stream/nonl.log" 'RESULT GLEXCEPT: IDENTICAL'
+{ head -1 "$ROOT/data/expected/GLPOST01/GLEXCEPT.dat" | cut -c1-79; tail -n +2 "$ROOT/data/expected/GLPOST01/GLEXCEPT.dat"; } \
+    > "$TMP/stream/short.dat"
+"$ROOT/scripts/compare_files.py" --layout "$ROOT/layouts/GLEXCEPT.json" \
+    --baseline "$ROOT/data/expected/GLPOST01/GLEXCEPT.dat" --target "$TMP/stream/short.dat" \
+    > "$TMP/stream/short.log" 2>&1
+assert_eq "short target record -> exit 8, no traceback" "8" "$?"
+assert_no_grep "short target record does not crash"   "$TMP/stream/short.log" 'Traceback|IndexError'
+assert_grep "short target record is reported by LRECL" "$TMP/stream/short.log" 'TARGET records not LRECL 80: \[1\]'
+assert_grep "short target record shows its length"     "$TMP/stream/short.log" 'record +1: .*length 80 vs 79'
+head -c -1 "$ROOT/data/expected/GLPOST01/GLPOST01.rpt" > "$TMP/stream/nonl.rpt"
+"$ROOT/scripts/compare_files.py" --text \
+    --baseline "$ROOT/data/expected/GLPOST01/GLPOST01.rpt" --target "$TMP/stream/nonl.rpt" \
+    > "$TMP/stream/rpt.log" 2>&1
+assert_eq "report missing final newline -> exit 8" "8" "$?"
+
 echo
 echo "$PASS passed, $FAIL failed"
 (( FAIL == 0 ))
