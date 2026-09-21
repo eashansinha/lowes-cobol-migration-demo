@@ -138,7 +138,7 @@ pre-started session.)
 5. If a first pass differs (it usually does on sign or padding): show the
    Layer 2 line - e.g. `key T000000409  DESCRIPTION  NO DESCRIPTION -> ` -
    then the fix, then the re-run to `IDENTICAL`.
-6. **Regression harness** `tests/run_glpost01_tests.sh` -> `64 passed`.
+6. **Regression harness** `tests/run_glpost01_tests.sh` -> `67 passed`.
 7. **PR opened**, description carries the pasted comparator tail.
 
 **Fallback if the session is slow:** run the comparator yourself against a

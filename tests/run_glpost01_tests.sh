@@ -165,6 +165,16 @@ head -c -1 "$ROOT/data/expected/GLPOST01/GLPOST01.rpt" > "$TMP/stream/nonl.rpt"
     --baseline "$ROOT/data/expected/GLPOST01/GLPOST01.rpt" --target "$TMP/stream/nonl.rpt" \
     > "$TMP/stream/rpt.log" 2>&1
 assert_eq "report missing final newline -> exit 8" "8" "$?"
+{ cat "$ROOT/data/expected/GLPOST01/GLPOST01.rpt"; printf '%-132s\n' '  EXTRA SUMMARY LINE'; } \
+    > "$TMP/stream/extra.rpt"
+"$ROOT/scripts/compare_files.py" --text \
+    --baseline "$ROOT/data/expected/GLPOST01/GLPOST01.rpt" \
+    --target "$TMP/stream/extra.rpt" > "$TMP/stream/extra.log" 2>&1
+assert_eq "report with an appended line -> exit 8" "8" "$?"
+assert_grep "appended report line is shown, not hidden" "$TMP/stream/extra.log" \
+    'line +41 target   \| +EXTRA SUMMARY LINE'
+assert_grep "appended report line counted as a difference" "$TMP/stream/extra.log" \
+    '1 differing lines'
 
 echo
 echo "$PASS passed, $FAIL failed"

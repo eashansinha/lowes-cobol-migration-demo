@@ -78,6 +78,13 @@ Machine-readable layouts for the comparator: `layouts/GLTRANS.json`,
   classification) instead of being rejected E001. Not in the sample data; the
   Java job must reproduce the same outcome on identical input, and the finding
   goes on a separate maintenance task.
+- `1100-READ-CONTROL-CARDS` (364-372) accepts any 8 characters after
+  `RUNDATE=`: it checks the prefix only, `MOVE`s the text into `WS-RUNDATE`
+  and derives `WS-RUN-PERIOD` from the first six. A non-numeric or impossible
+  calendar value (`RUNDATE=20260931`) is not RC 8; it drives BR-V7 as-is and
+  is written into every GLPOSTED `RUN-DATE`. The RC 8 "bad control card" path
+  fires only when the prefix is missing. Not in the sample run; the migration
+  reproduces it, and the finding goes on a separate maintenance task.
 - `WS-FS-RPT` is checked only after `OPEN` (338); none of the 27
   `WRITE REPORT-REC` statements test it, so a failed report write does not
   change the return code. Not reproducible with the sample data.
@@ -95,7 +102,7 @@ Machine-readable layouts for the comparator: `layouts/GLTRANS.json`,
 ```bash
 scripts/build.sh                 # cobc -> bin/GLPOST01
 scripts/run_glpost01.sh          # SORT -> GLPOST01 -> compare_glpost01.sh ; MAXCC=4 expected
-tests/run_glpost01_tests.sh      # 64-assertion harness (also runs in CI)
+tests/run_glpost01_tests.sh      # 67-assertion harness (also runs in CI)
 ```
 
 Sample input: `data/input/GLTRANS.dat` (31 lines, 4 batches) +

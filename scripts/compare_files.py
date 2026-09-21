@@ -30,6 +30,7 @@ import argparse
 import json
 import sys
 from decimal import Decimal
+from itertools import zip_longest
 
 
 # ----------------------------------------------------------------- layout
@@ -92,11 +93,16 @@ def read_bytes(path):
         return fh.read()
 
 
-def read_records(path, lrecl):
-    data = read_bytes(path)
+def split_lines(data):
     recs = data.decode("latin-1").split("\n")
     if recs and recs[-1] == "":
         recs.pop()
+    return recs
+
+
+def read_records(path, lrecl):
+    data = read_bytes(path)
+    recs = split_lines(data)
     bad = [i + 1 for i, r in enumerate(recs) if len(r) != lrecl]
     return data, recs, bad
 
@@ -260,14 +266,17 @@ def compare_fixed(args):
 
 def compare_text(args):
     raw_b, raw_t = read_bytes(args.baseline), read_bytes(args.target)
-    b = raw_b.decode("latin-1").split("\n")
-    t = raw_t.decode("latin-1").split("\n")
+    b, t = split_lines(raw_b), split_lines(raw_t)
     out = ["compare_files.py  text report", f"  baseline {args.baseline}", f"  target   {args.target}",
            f"Layer 1 - lines: baseline {len(b)} lines, target {len(t)} lines"]
-    diffs = [i for i, (x, y) in enumerate(zip(b, t), start=1) if x != y]
+    diffs = [i for i, (x, y) in enumerate(zip_longest(b, t), start=1) if x != y]
     for i in diffs[:args.max_diffs]:
-        out.append(f"  line {i:>4} baseline | {b[i - 1].rstrip()}")
-        out.append(f"  line {i:>4} target   | {t[i - 1].rstrip()}")
+        x = b[i - 1].rstrip() if i <= len(b) else "<no line - baseline ends>"
+        y = t[i - 1].rstrip() if i <= len(t) else "<no line - target ends>"
+        out.append(f"  line {i:>4} baseline | {x}")
+        out.append(f"  line {i:>4} target   | {y}")
+    if len(diffs) > args.max_diffs:
+        out.append(f"  ... {len(diffs) - args.max_diffs} more differing lines not shown")
     for note in stream_diffs(raw_b, raw_t):
         out.append(f"  STREAM {note}")
     identical = raw_b == raw_t

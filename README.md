@@ -37,7 +37,7 @@ ACCTMAST.dat (chart of accounts, FB 60) +--> STEP010 SORT -> STEP020 GLPOST01 --
 sudo apt-get install -y gnucobol        # GnuCOBOL 3.x (Ubuntu 22.04 ships 3.1.2)
 scripts/build.sh                        # -> bin/GLPOST01 (and bin/PRCUPD01)
 scripts/run_glpost01.sh                 # SORT -> GLPOST01 -> compare_glpost01.sh ; exit = MAXCC (4 expected)
-tests/run_glpost01_tests.sh             # 64-assertion regression harness (runs in CI)
+tests/run_glpost01_tests.sh             # 67-assertion regression harness (runs in CI)
 ```
 
 Sample run: 31 journal lines in 4 batches -> 22 posted, 9 exceptions (one per
@@ -73,7 +73,7 @@ cobol/copybooks/              GLTRNREC ACCTMAST GLPSTREC GLEXCREC (GLPOST01); IT
 cobol/sql/ddl/                DB2 DDL used by PRCUPD01
 jcl/GLPOST01.jcl              SORT -> GLPOST01 -> IEBCOMPR parity (regression environments)
 jcl/PRCUPD01.jcl              SORT -> PRCUPD01 -> compare ; jcl/INVREPL01.jcl dependent job
-schedules/nightly.txt         scheduler manifest for the pricing chain
+schedules/nightly.txt         scheduler manifest: GL stream (GLPOST01) and pricing chain
 layouts/*.json                machine-readable copybook layouts for compare_files.py
 data/input/                   GLTRANS.dat ACCTMAST.dat (GL) ; PROMOFEED ITEMMAST STORE_REGION (pricing)
 data/expected/GLPOST01/       golden GLPOSTED.dat GLEXCEPT.dat GLPOST01.rpt
