@@ -15,17 +15,24 @@ on the ticket - do not pick one silently.
 
 ## 1. Before touching code
 
-1. Read the ticket and **all** comments with the Jira tool (`get_issue`,
-   `list_comments`). Extract: job/program, paragraph, required proof, rows or
-   values the ticket says will change, and anything marked "preserve".
+Jira is reached through the `atlassian` MCP server (cog-gtm.atlassian.net):
+`getJiraIssue` (pass `fields: ["*all", "comment"]` to get the description
+and every comment), `searchJiraIssuesUsingJql`, `addCommentToJiraIssue`,
+`getTransitionsForJiraIssue`, `transitionJiraIssue`. No other Jira tools.
+
+1. Read the ticket and **all** comments (`getJiraIssue` with `comment` in
+   `fields`). Extract: job/program, paragraph, required proof, rows or values
+   the ticket says will change, and anything marked "preserve".
 2. If the session was started with a question rather than a ticket (a `@Devin`
    comment or `!cobol_ask`), find the ticket key in the comment or in the
-   issue the comment was posted on; if there is none, answer the question as
-   asked from the repo and say that no ticket was in scope. Never pick a
-   ticket off the board on the asker's behalf.
-3. Post one comment: session link + one-line plan + the phases you will report
-   on. Move `Ready for Devin -> In Progress` (`list_transitions` then apply).
-   For `!cobol_ask` / read-only work: do **not** transition; comment only.
+   issue the comment was posted on. If there is none, no ticket is in scope:
+   answer the question as asked from the repo, in the session, say that no
+   ticket was in scope, skip step 3 and every Jira comment or transition in
+   this protocol, and never pick a ticket off the board on the asker's behalf.
+3. Post one comment (`addCommentToJiraIssue`): session link + one-line plan +
+   the phases you will report on. Move `Ready for Devin -> In Progress`
+   (`getTransitionsForJiraIssue` then `transitionJiraIssue`). For
+   `!cobol_ask` / read-only work: do **not** transition; comment only.
 
 ## 2. During the work - one comment per phase
 

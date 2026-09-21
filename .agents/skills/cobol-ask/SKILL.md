@@ -9,13 +9,15 @@ argument-hint: <question or MFM ticket key>
 
 You are answering, not implementing. No edits, no shell, no PR, no Jira
 transitions. Follow `mfm-jira-board` for reading the ticket; skip its
-transition steps. The only Jira tools you may use are the issue read, JQL
-search and add-comment tools (Atlassian MCP names above; the integration's
-`get_issue` / `list_comments` / `add_comment` equivalents count as the same)
-- never `transitionJiraIssue`, `editJiraIssue` or `createJiraIssue`.
+transition steps. Jira is the `atlassian` MCP server and the only Jira tools
+you may use are the three in `allowed-tools`: `getJiraIssue` (with `comment`
+in `fields`, which returns every comment), `searchJiraIssuesUsingJql` and
+`addCommentToJiraIssue` - never `transitionJiraIssue`, `editJiraIssue` or
+`createJiraIssue`.
 
-If the question carries no ticket key, answer the question as asked from the
-repo and say so; do not pick a ticket from the board on the asker's behalf.
+If the question carries no ticket key, no ticket is in scope: answer the
+question as asked from the repo, in the session, say so, and post nothing to
+Jira; do not pick a ticket from the board on the asker's behalf.
 
 ## Answer shape
 
@@ -42,5 +44,13 @@ Start from the JCL and walk outward; cite everything.
    the same inputs -> CI gate -> PR), the golden files that would change, and
    a confidence estimate: high / medium / low with one sentence why.
 
-Finish with: "To implement, start a Devin session with `!jcl_migrate` or
-`!cobol_fix` on this ticket." Do not start it yourself.
+Finish:
+
+- Ticket in scope: post the answer as one comment on the ticket
+  (`addCommentToJiraIssue`) and end it with "To implement, start a Devin
+  session with `!jcl_migrate` or `!cobol_fix` on this ticket."
+- No ticket in scope: end the session answer with "To implement, create or
+  pick an MFM ticket for this and start a Devin session on it with
+  `!jcl_migrate` or `!cobol_fix`."
+
+Do not start the implementation session yourself.
