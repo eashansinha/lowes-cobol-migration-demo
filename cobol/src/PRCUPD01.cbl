@@ -129,6 +129,10 @@
                10  WS-RUN-MM           PIC X(02).
                10  WS-RUN-DD           PIC X(02).
            05  WS-CLEARANCE-MARKDOWN   PIC 9(03) VALUE 090.
+           05  WS-IT-MAX               PIC 9(05) VALUE 5000.
+           05  WS-ST-MAX               PIC 9(04) VALUE 500.
+           05  WS-PT-MAX               PIC 9(05) VALUE 5000.
+           05  WS-OVERFLOW-TABLE       PIC X(08).
            05  WS-SQLCODE              PIC S9(09) COMP VALUE 0.
                88  SQL-OK              VALUE 0.
                88  SQL-NOT-FOUND       VALUE +100.
@@ -385,6 +389,10 @@
                READ ITEM-FILE
                    AT END MOVE 'Y' TO WS-EOF-ITEM
                    NOT AT END
+                       IF WS-IT-COUNT >= WS-IT-MAX
+                           MOVE 'ITEMMAST' TO WS-OVERFLOW-TABLE
+                           PERFORM 1900-TABLE-OVERFLOW
+                       END-IF
                        ADD 1 TO WS-IT-COUNT
                        MOVE IM-SKU        TO WS-IT-SKU (WS-IT-COUNT)
                        MOVE IM-DESC       TO WS-IT-DESC (WS-IT-COUNT)
@@ -416,6 +424,10 @@
                            UNSTRING STORE-CSV-REC DELIMITED BY ','
                                INTO WS-F01 WS-F02 WS-F03 WS-F04
                            END-UNSTRING
+                           IF WS-ST-COUNT >= WS-ST-MAX
+                               MOVE 'STORERGN' TO WS-OVERFLOW-TABLE
+                               PERFORM 1900-TABLE-OVERFLOW
+                           END-IF
                            ADD 1 TO WS-ST-COUNT
                            MOVE WS-F01 TO WS-ST-STORE-NBR (WS-ST-COUNT)
                            MOVE WS-F04 TO WS-ST-REGION-CD (WS-ST-COUNT)
@@ -423,6 +435,12 @@
                END-READ
            END-PERFORM
            MOVE WS-ST-COUNT TO WS-CNT-STORES.
+
+       1900-TABLE-OVERFLOW.
+           DISPLAY 'PRCUPD01 E003 ' WS-OVERFLOW-TABLE
+                   ' UNLOAD EXCEEDS TABLE CAPACITY'
+           MOVE 8 TO RETURN-CODE
+           STOP RUN.
 
       *================================================================*
       * 2000 - PROCESS ONE PROMO RECORD                                *
@@ -552,7 +570,6 @@
                    MOVE RGN-OUT-PRICE TO WS-WORK-PRICE
                    IF RGN-OUT-OVERRIDE NOT = SPACES
                        MOVE 'RGNOVR' TO WS-CHANGE-RSN
-                       ADD 1 TO WS-CNT-RGN-OVERRIDE
                    END-IF
                    IF WS-IT-STATUS (IT-IDX) = 'C'
                        PERFORM 2620-CLEARANCE-PRICING
@@ -561,7 +578,6 @@
                    END-IF
                    IF WS-FLOOR-APPLIED = 'Y'
                        MOVE 'FLOOR' TO WS-CHANGE-RSN
-                       ADD 1 TO WS-CNT-FLOORED
                    END-IF
                    PERFORM 2700-APPLY-TO-ITEM-PRICE
            END-EVALUATE.
@@ -637,8 +653,11 @@
                WHEN SQL-NOT-FOUND
                    MOVE 'NO ITEM_PRICE ROW FOR REGION' TO RD-MESSAGE
                    PERFORM 7100-REPORT-EXCEPTION
-               WHEN IP-CURR-PRICE = WS-WORK-PRICE
-                AND IP-PROMO-ID   = PR-PROMO-ID
+               WHEN IP-CURR-PRICE    = WS-WORK-PRICE
+                AND IP-PRICE-TYPE    = 'P'
+                AND IP-PROMO-ID      = PR-PROMO-ID
+                AND IP-PROMO-EFF-DT  = PR-EFF-DATE
+                AND IP-PROMO-END-DT  = PR-END-DATE
                    ADD 1 TO WS-CNT-NO-CHANGE
                    MOVE IP-CURR-PRICE TO WS-OLD-PRICE
                    MOVE 'NOCHG'   TO RD-STATUS
@@ -656,6 +675,12 @@
                    MOVE PR-PROMO-ID   TO PH-PROMO-ID
                    PERFORM 8400-DB2-INSERT-PRICE-HIST
                    ADD 1 TO WS-CNT-PRICES-APPLIED
+                   IF WS-FLOOR-APPLIED = 'Y'
+                       ADD 1 TO WS-CNT-FLOORED
+                   END-IF
+                   IF RGN-OUT-OVERRIDE NOT = SPACES
+                       ADD 1 TO WS-CNT-RGN-OVERRIDE
+                   END-IF
                    MOVE 'UPDATED' TO RD-STATUS
                    MOVE SPACES    TO RD-MESSAGE
                    PERFORM 7300-REPORT-PRICE-LINE
@@ -784,6 +809,10 @@
                INTO WS-F01 WS-F02 WS-F03 WS-F04 WS-F05
                     WS-F06 WS-F07 WS-F08 WS-F09
            END-UNSTRING
+           IF WS-PT-COUNT >= WS-PT-MAX
+               MOVE 'ITMPRCI' TO WS-OVERFLOW-TABLE
+               PERFORM 1900-TABLE-OVERFLOW
+           END-IF
            ADD 1 TO WS-PT-COUNT
            SET PT-IDX TO WS-PT-COUNT
            MOVE WS-F01 TO WS-PT-SKU (PT-IDX)
@@ -927,8 +956,11 @@
                            UNSTRING HIST-IN-REC DELIMITED BY ','
                                INTO WS-F01
                            END-UNSTRING
-                           COMPUTE WS-LAST-HIST-SEQ =
-                               FUNCTION NUMVAL (WS-F01)
+                           IF FUNCTION NUMVAL (WS-F01) >
+                              WS-LAST-HIST-SEQ
+                               COMPUTE WS-LAST-HIST-SEQ =
+                                   FUNCTION NUMVAL (WS-F01)
+                           END-IF
                        END-IF
                END-READ
            END-PERFORM

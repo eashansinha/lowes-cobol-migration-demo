@@ -50,7 +50,7 @@ assert_eq "promo records read"          "20" "$(total 'PROMO RECORDS READ')"
 assert_eq "promos expired (phase 1)"    "2"  "$(total 'PROMOS EXPIRED \(PHASE 1\)')"
 assert_eq "prices updated"              "30" "$(total 'PRICES UPDATED')"
 assert_eq "prices raised to floor"      "9"  "$(total 'OF WHICH RAISED TO FLOOR')"
-assert_eq "region overrides"            "6"  "$(total 'OF WHICH REGION OVERRIDE')"
+assert_eq "region overrides"            "5"  "$(total 'OF WHICH REGION OVERRIDE')"
 assert_eq "prices unchanged"            "1"  "$(total 'PRICES UNCHANGED')"
 assert_eq "promos skipped"              "4"  "$(total 'PROMOS SKIPPED \(WARNING\)')"
 assert_eq "promos rejected"             "5"  "$(total 'PROMOS REJECTED \(EXCEPTION\)')"
@@ -106,17 +106,48 @@ assert_eq "second run updates 0 prices" "0" \
     "$(grep -E '^    PRICES UPDATED +[0-9]+$' "$TMP/PRCUPD01.rerun.rpt" | awk '{print $NF}')"
 assert_eq "second run reports 31 unchanged (30 applied + 1 pre-existing)" "31" \
     "$(grep -E '^    PRICES UNCHANGED +[0-9]+$' "$TMP/PRCUPD01.rerun.rpt" | awk '{print $NF}')"
+assert_eq "second run: floor / override sub-totals only count real updates" "0/0" \
+    "$(grep -E '^ +OF WHICH RAISED TO FLOOR +[0-9]+$' "$TMP/PRCUPD01.rerun.rpt" | awk '{print $NF}')/$(grep -E '^ +OF WHICH REGION OVERRIDE +[0-9]+$' "$TMP/PRCUPD01.rerun.rpt" | awk '{print $NF}')"
 if cmp -s "$ROOT/data/db2/expected_after/ITEM_PRICE.csv" "$TMP/ITEM_PRICE.rerun.csv"; then
     ok "ITEM_PRICE after-state is a fixed point"
 else
     bad "ITEM_PRICE after-state changed on re-run"
 fi
 
+echo "== T06b same-price promo extension refreshes the dates (not NOCHG)"
+grep '^PRM2026112' "$ROOT/data/input/PROMOFEED.dat" \
+    | sed 's/^\(.\{34\}\)20260928/\120261015/' > "$TMP/PROMOFEED.extend.dat"
+export DD_PROMOIN="$TMP/PROMOFEED.extend.dat" DD_ITMPRCO="$TMP/ITEM_PRICE.extend.csv"
+export DD_PRCHSTO="$TMP/PRICE_HIST.extend.csv" DD_PRCRPT="$TMP/PRCUPD01.extend.rpt"
+"$ROOT/bin/PRCUPD01" > /dev/null 2>&1
+assert_grep "extended promo is reported UPDATED at the same price" "$TMP/PRCUPD01.extend.rpt" \
+    '^PRM2026112 10020977 MW  P +38\.98 +33\.09 +33\.09 +PROMO +UPDATED'
+assert_grep "ITEM_PRICE row carries the new end date" "$TMP/ITEM_PRICE.extend.csv" \
+    '^10020977,MW,38\.98,33\.09,P,PRM2026112,2026-09-15,2026-10-15,PRCUPD01$'
+
+echo "== T06c unsorted PRICE_HIST unload: new HIST_SEQ continues from the max"
+{ head -1 "$ROOT/data/db2/before/PRICE_HIST.csv"; tail -n +2 "$ROOT/data/db2/before/PRICE_HIST.csv" | tac; } \
+    > "$TMP/PRICE_HIST.unsorted.csv"
+export DD_PROMOIN="$TMP/PROMOFEED.sorted.dat" DD_ITMPRCI="$ROOT/data/db2/before/ITEM_PRICE.csv"
+export DD_ITMPRCO="$TMP/ITEM_PRICE.unsorted.csv" DD_PRCHSTI="$TMP/PRICE_HIST.unsorted.csv"
+export DD_PRCHSTO="$TMP/PRICE_HIST.unsorted.out.csv" DD_PRCRPT="$TMP/PRCUPD01.unsorted.rpt"
+"$ROOT/bin/PRCUPD01" > /dev/null 2>&1
+assert_grep "first insert still gets 1004" "$TMP/PRICE_HIST.unsorted.out.csv" '^1004,10057890,NE,'
+assert_no_grep "no duplicate HIST_SEQ with unsorted unload" <(cut -d, -f1 "$TMP/PRICE_HIST.unsorted.out.csv" | sort | uniq -d) '.'
+
 echo "== T07 control-card validation"
 export DD_SYSIN="$TMP/EMPTY.txt"; : > "$TMP/EMPTY.txt"
 "$ROOT/bin/PRCUPD01" > "$TMP/norundate.log" 2>&1
 assert_eq "missing RUNDATE -> RC 8" "8" "$?"
 assert_grep "missing RUNDATE -> E002 message" "$TMP/norundate.log" 'E002 RUNDATE CONTROL CARD MISSING'
+
+echo "== T08 table capacity guard"
+export DD_SYSIN="$TMP/SYSIN.txt" DD_STORERGN="$TMP/STORE_REGION.big.csv"
+{ head -1 "$ROOT/data/input/STORE_REGION.csv"; for i in $(seq 1 501); do printf '%04d,STORE %d,ST,NE\n' "$i" "$i"; done; } \
+    > "$TMP/STORE_REGION.big.csv"
+"$ROOT/bin/PRCUPD01" > "$TMP/overflow.log" 2>&1
+assert_eq "501 STORE_REGION rows -> RC 8 instead of overrunning the table" "8" "$?"
+assert_grep "overflow -> E003 message names the DD" "$TMP/overflow.log" 'E003 STORERGN UNLOAD EXCEEDS TABLE CAPACITY'
 
 echo
 echo "$PASS passed, $FAIL failed"
