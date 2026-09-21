@@ -16,7 +16,37 @@ docs; Jira numbered them from 1.
 | MFM-101 | `MFM-1` | https://cog-gtm.atlassian.net/browse/MFM-1 |
 | MFM-102 | `MFM-2` | https://cog-gtm.atlassian.net/browse/MFM-2 |
 
-Both tickets sit in **Ready for Devin**.
+Both tickets were created in **Ready for Devin**; the Jira integration moves
+them to **In Progress** when a session picks them up.
+
+### Board inventory (context for Devin)
+
+The board also carries the project's history and backlog so a session working
+MFM-1 or MFM-2 can read what was already decided (goldens freeze current
+behaviour, DB2 is CSV, which defects are fixed vs. preserved) instead of
+rediscovering it. Tickets without the `devin` label are context only.
+
+| Key | Status | Type | Summary |
+|-----|--------|------|---------|
+| [MFM-3](https://cog-gtm.atlassian.net/browse/MFM-3) | Done | Task | Inventory nightly batch: PRCUPD01 -> INVREPL01 dependency chain and DD/dataset map |
+| [MFM-4](https://cog-gtm.atlassian.net/browse/MFM-4) | Done | Task | Stand up GnuCOBOL build and CI (ASCII, no mainframe needed) |
+| [MFM-5](https://cog-gtm.atlassian.net/browse/MFM-5) | Done | Task | Capture golden-master outputs: audit report + ITEM_PRICE / PRICE_HIST after-state |
+| [MFM-6](https://cog-gtm.atlassian.net/browse/MFM-6) | Done | Task | Decision: DB2 tables as CSV before/after dumps |
+| [MFM-7](https://cog-gtm.atlassian.net/browse/MFM-7) | Done | Bug | REGION OVERRIDE total counted rejected NC BOGO rows (6 -> 5) |
+| [MFM-8](https://cog-gtm.atlassian.net/browse/MFM-8) | Done | Bug | HIST_SEQ taken from last row instead of max; capacity guards |
+| [MFM-9](https://cog-gtm.atlassian.net/browse/MFM-9) | In Review | Task | Devin playbooks: `!jcl_migrate` and `!cobol_fix` |
+| [MFM-1](https://cog-gtm.atlassian.net/browse/MFM-1) | In Progress | Story | Migrate PRCUPD01 to Java (Spring Batch) with equivalence verification (MFM-101) |
+| [MFM-2](https://cog-gtm.atlassian.net/browse/MFM-2) | In Progress | Bug | Fix clearance price-floor rounding defect (MFM-102) |
+| [MFM-10](https://cog-gtm.atlassian.net/browse/MFM-10) | Backlog | Bug | WC lumber 15% cap defeated by the .x9 round-down (SKU 10012233 -> 3.59) |
+| [MFM-11](https://cog-gtm.atlassian.net/browse/MFM-11) | Backlog | Story | Migrate INVREPL01 to Java once PRCUPD01 equivalence is proven |
+| [MFM-12](https://cog-gtm.atlassian.net/browse/MFM-12) | Backlog | Task | EBCDIC -> ASCII strategy for production feeds (COMP-3, zoned) |
+| [MFM-13](https://cog-gtm.atlassian.net/browse/MFM-13) | Backlog | Story | Publish price-change events to MQ from the Java implementation |
+| [MFM-14](https://cog-gtm.atlassian.net/browse/MFM-14) | Backlog | Task | Migration spec for PRCRGN01 region override rules |
+
+MFM-10 is the live "pick up a fresh ticket" candidate for the demo: it is a
+real, unfixed defect with a predicted one-row golden change. It has no `devin`
+label yet, so no session exists for it; start one from the ticket (path B in
+`JIRA_TO_DEVIN_DEMO_GUIDE.md`) or add the label live.
 
 ## Board
 

@@ -48,6 +48,13 @@ Devin posts the session link back as a Jira comment, moves the ticket to
 comment with the verification summary. Follow-ups are `@Devin` comments on the
 ticket; they route to the existing session.
 
+Verified on the cog-gtm sandbox (2026-09-21): creating an MFM ticket **with the
+`devin` label** starts a session in the Eashan-Dev org within seconds and links
+it back on the ticket (MFM-9, MFM-14). Creating a ticket without the label, or
+re-adding the label to an existing ticket that already has a session, does not.
+The `devin`-labelled tickets are the ones you want Devin to work; keep the
+label off pure context/history tickets.
+
 For the board in `JIRA_SETUP.md` the automation trigger to configure is:
 *project = MFM, status = Ready for Devin, playbook = `!jcl_migrate`* (stories)
 and a second one *label = maintenance, playbook = `!cobol_fix`* (bugs).
