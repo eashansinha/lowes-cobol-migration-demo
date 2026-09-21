@@ -47,8 +47,9 @@ linked a session (it does not move the ticket by itself).
 
 MFM-10 is the live "pick up a fresh ticket" candidate for the demo: it is a
 real, unfixed defect with a predicted one-row golden change. It has no `devin`
-label yet, so no session exists for it; start one from the ticket (path B in
-`JIRA_TO_DEVIN_DEMO_GUIDE.md`) or add the label live.
+label yet, so no session exists for it; start one from the ticket with the
+path B prompt in `JIRA_TO_DEVIN_DEMO_GUIDE.md` using the MFM-10 URL and
+`!cobol_fix` (it is a Bug, not a migration), or add the label live.
 
 ## Board
 
@@ -59,7 +60,7 @@ label yet, so no session exists for it; start one from the ticket (path B in
 | Columns | `Backlog` -> `Ready for Devin` -> `In Progress` -> `In Review` -> `Verified` -> `Done` |
 | WIP limit | `In Progress` = 3 (one Devin session per ticket) |
 | Devin trigger (ask) | Label `!cobol_ask`, or comment `@Devin !cobol_ask <question>`: read-only analysis + scoped plan as a comment, no code, no transition. Also the default playbook, so assigning to the Devin user / label `devin` is ask mode |
-| Devin trigger (work) | Label `!jcl_migrate` (Story) or `!cobol_fix` (Bug), or the automation *status = Ready for Devin*: full session with the ticket as the task |
+| Devin trigger (work) | Label `!jcl_migrate` (Story) or `!cobol_fix` (Bug), or the automation *status = Ready for Devin* (not yet verified on the sandbox; the only verified trigger is the `devin` label at creation): full session with the ticket as the task |
 | Board protocol | Repo skill `.agents/skills/mfm-jira-board/SKILL.md` + pinned knowledge note: read ticket first, phase comments `EXPLORE / SPECIFY / PLAN / IMPLEMENT / VERIFY`, evidence on the ticket |
 | Devin transitions | Devin moves the ticket `Ready for Devin -> In Progress` when it starts and `In Progress -> In Review` when the PR is open. Humans move `In Review -> Verified -> Done` |
 | Required fields | Repository (`eashansinha/lowes-cobol-migration-demo`), Job name, Acceptance criteria |

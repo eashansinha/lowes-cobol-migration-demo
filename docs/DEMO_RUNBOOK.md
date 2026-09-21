@@ -50,11 +50,15 @@ loud - it is the point of the CSV stand-in model.
 
 ### 0.4 Jira
 
-Follow `docs/JIRA_SETUP.md`: board **Mainframe Modernization**, tickets
-MFM-101 and MFM-102 in **Ready for Devin**. The live sandbox is
+Follow `docs/JIRA_SETUP.md`: board **Mainframe Modernization**. The live
+sandbox is
 [MFM on cog-gtm.atlassian.net](https://cog-gtm.atlassian.net/jira/software/projects/MFM/boards/2594);
 there the tickets are keyed `MFM-1` (= MFM-101) and `MFM-2` (= MFM-102), so
-substitute those keys in the prompts. If the Jira integration is not
+substitute those keys in the prompts. Both are already **In Progress** with
+sessions attached (see the board inventory in `JIRA_SETUP.md`), so the live
+"Devin picks a ticket off the board" moment should use a ticket with no
+session, e.g. `MFM-10` (path B prompt with `!cobol_fix` in
+`JIRA_TO_DEVIN_DEMO_GUIDE.md`). If the Jira integration is not
 connected to this Devin org, keep the board open in a browser tab and move
 tickets by hand while narrating - the prompt text below contains everything
 Devin needs regardless.
@@ -77,7 +81,7 @@ show MFM-101 from a pre-run session (fallback, section 3).
 | Min | Phase | Eashan does | Omkar watches |
 |-----|-------|-------------|---------------|
 | 0-3 | Set the scene | Open the repo. Show `jcl/PRCUPD01.jcl` (3 steps, DD names), `schedules/nightly.txt` (INVREPL01 depends on it), `data/db2/before/ITEM_PRICE.csv` ("this is DB2, unloaded"). Run `scripts/run_job.sh` in a terminal: MAXCC=4, compare PASS. | A real-looking job, real DB2 shape, no mainframe needed to run it. |
-| 3-5 | Kick off both tickets | Move MFM-101 to **Ready for Devin** (or paste Prompt A into a new session). Start a second session with Prompt B (MFM-102). Tickets move to **In Progress**. | Jira is the entry point; Devin picks work off the board. |
+| 3-5 | Kick off both tickets | Paste Prompt A into a new session for MFM-101 and Prompt B into a second one for MFM-102 (or reuse the sessions already linked on MFM-1 / MFM-2). For a live board pick-up, start a session on MFM-10 (no session yet) with the path B prompt and `!cobol_fix`, and watch it move to **In Progress**; only use the label trigger on it if you have tested label-on-existing-ticket beforehand (the verified trigger is the `devin` label at ticket creation). | Jira is the entry point; Devin picks work off the board. |
 | 5-9 | **Explore** (MFM-101) | Narrate Devin's actions: it reads the JCL first, follows DD names into `SELECT ... ASSIGN`, opens copybooks, finds `CALL 'PRCRGN01'`, reads the DDL, reads the scheduler manifest. Point at its plan / notes. | Devin builds the dependency picture (job -> program -> subprogram -> copybooks -> tables -> downstream job) rather than translating line by line. Ask it a question live: *"which downstream jobs break if ITEM_PRICE column order changes?"* |
 | 9-14 | **Specify** | Devin writes `docs/specs/PRCUPD01-spec.md` from the template. Open it as it lands. Highlight the business-rules table with BR ids and the *evidence* column (paragraph names). Look for BR-P6 flagged as "observed defect - preserve". | The spec is the reviewable artefact a Lowe's SME signs off, and it is traceable to source lines. Devin found the planted defect by reading, not by being told. |
 | 14-16 | **Plan** | Devin posts its Spring Batch layout (steps / reader / processor / writer, CSV repositories behind an interface). Approve or nudge ("keep the report writer a plain 132-column formatter"). | You steer at the plan stage, cheaply, before code exists. |

@@ -43,7 +43,7 @@ integration's **Session mode**:
 | Add label `!jcl_migrate` or `!cobol_fix` | that playbook, full implementation session |
 | Assign the ticket to the Devin user / add label `devin` | default playbook (set it to `!cobol_ask` so the safe path is the default) |
 | Comment `@Devin <instruction>` | the comment as the task, no playbook |
-| Automation trigger: project `MFM`, status `Ready for Devin` | configured playbook |
+| Automation trigger: project `MFM`, status `Ready for Devin` | configured playbook (not yet verified on the sandbox, see below) |
 
 **Ask mode, two ways to get it**
 
@@ -82,7 +82,11 @@ label off pure context/history tickets.
 
 For the board in `JIRA_SETUP.md` the automation trigger to configure is:
 *project = MFM, status = Ready for Devin, playbook = `!jcl_migrate`* (stories)
-and a second one *label = maintenance, playbook = `!cobol_fix`* (bugs).
+and a second one *label = maintenance, playbook = `!cobol_fix`* (bugs). Neither
+automation has been exercised on the sandbox yet (the `devin` label is the
+only trigger verified above), so do not rely on a status move to start a
+session during the demo unless you have tested it first; use the label or
+path B instead.
 
 **Why every session knows about the board.** Two always-on pieces of
 context, no prompt needed:
@@ -105,15 +109,22 @@ phase, and the ticket lands in `In Review` with the evidence attached.
 
 1. Open the ticket in Jira, copy its URL.
 2. In Devin, start a new session on the repo `eashansinha/lowes-cobol-migration-demo`
-   and paste:
+   and paste, filling in the ticket URL and the playbook that matches its
+   type (`!jcl_migrate` for migration Stories, `!cobol_fix` for Bugs):
 
    ```
-   Work Jira ticket https://cog-gtm.atlassian.net/browse/MFM-1 (MFM-101 in
-   the docs). Read the ticket and its comments first,
-   then follow the playbook !jcl_migrate. Post a short comment on the ticket
+   Work Jira ticket <TICKET_URL>. Read the ticket and its comments first,
+   then follow the playbook <PLAYBOOK>. Post a short comment on the ticket
    at the end of each phase (explore / specify / plan / implement / verify)
    and move it to In Progress now and In Review when the PR is open.
    ```
+
+   Filled in for the two tickets used in this demo:
+
+   - MFM-1 (MFM-101, migration Story):
+     `Work Jira ticket https://cog-gtm.atlassian.net/browse/MFM-1 ... follow the playbook !jcl_migrate ...`
+   - MFM-10 (WC lumber cap Bug, the fresh pick-up):
+     `Work Jira ticket https://cog-gtm.atlassian.net/browse/MFM-10 ... follow the playbook !cobol_fix ...`
 
    Devin reads the ticket through the Jira connection (or, if Jira is not
    connected, use Prompt A / Prompt B from `DEMO_RUNBOOK.md` which contain the
@@ -259,8 +270,8 @@ Devin never moves a ticket to `Done`. While a PR is open the ticket stays in
 - [x] PR #1 merged to `main`, so the estate is on the indexed branch.
 - [x] Atlassian connection authorised in Eashan-Dev; project `MFM` exists.
       MFM-1 / MFM-2 (aliases MFM-101 / MFM-102) are in `In Progress` with
-      sessions already attached; to show the pick-up moment live, use MFM-10
-      (Backlog, no session) or move MFM-2 back to `Ready for Devin` first.
+      sessions already attached; to show the pick-up moment live, use a ticket
+      with no existing session, such as MFM-10 (with `!cobol_fix`).
       Fallback: use Prompt A / Prompt B from `DEMO_RUNBOOK.md`.
 - [x] Routing to Eashan-Dev verified via MFM-9 / MFM-14 (see section 1A).
 - [ ] Jira integration: `!jcl_migrate` and `!cobol_fix` added as playbook labels.
