@@ -74,12 +74,31 @@ assert_grep "BR-V5 lapsed promo skipped"                                      "$
 assert_grep "BR-U2 promo already in effect -> NOCHG"                          "$RPT" '^PRM2026112 10020977 MW  P .*NOCHG    PROMO ALREADY IN EFFECT'
 assert_grep "BR-U1 missing ITEM_PRICE row rejected"                           "$RPT" '^PRM2026132 10199001 NC  P .*REJECT   NO ITEM_PRICE ROW FOR REGION'
 
-# Documented CURRENT behaviour of the clearance path (subject of Jira MFM-102):
-# floor 273.00 is applied before the round-down, so the shelf price lands at
-# 272.99, one cent BELOW the floor. The golden files freeze this behaviour;
-# MFM-102 changes the expected value to 273.09 and updates this assertion.
-assert_grep "BR-P6 clearance floor (CURRENT behaviour, see MFM-102: 272.99 < floor 273.00)" \
-    "$RPT" '^PRM2026123 10082345 NE  P +498\.00 +498\.00 +272\.99  FLOOR +UPDATED'
+# BR-P6 (MFM-102): clearance markdown 268.92 -> round down 268.89 -> floor
+# 273.00 -> round UP to .x9 = 273.09, same sequence as 2610-STANDARD-PRICING.
+assert_grep "BR-P6 clearance markdown then floor, rounded UP to .x9 (498.00 -40% x0.90 -> 273.09)" \
+    "$RPT" '^PRM2026123 10082345 NE  P +498\.00 +498\.00 +273\.09  FLOOR +UPDATED'
+
+# Regression for the MFM-102 defect class: every clearance (IM-STATUS C) row
+# reported with reason FLOOR must carry a NEW-PRICE >= its margin floor, where
+# floor = IM-UNIT-COST * (100 + IM-FLOOR-PCT) / 100 from the item master
+# (ITEMMAST: SKU 1-8, STATUS 47, UNIT-COST 48-54 9(5)V99, FLOOR-PCT 62-64).
+# Output is "<rows checked>/<rows below floor>"; the check must not be vacuous.
+FLOOR_CHECK="$(awk '
+    FNR == NR {
+        sku = substr($0, 1, 8); status = substr($0, 47, 1)
+        cost_c = substr($0, 48, 7) + 0; pct = substr($0, 62, 3) + 0
+        st[sku] = status; floor_c[sku] = int(cost_c * (100 + pct) / 100)
+        next
+    }
+    $8 == "FLOOR" && st[$2] == "C" {
+        checked++
+        split($7, p, "."); new_c = p[1] * 100 + p[2]
+        if (new_c < floor_c[$2]) below++
+    }
+    END { printf "%d/%d", checked, below + 0 }
+' "$ROOT/data/input/ITEMMAST.dat" "$RPT")"
+assert_eq "BR-P6 regression: 4 clearance FLOOR rows checked, none below their floor" "4/0" "$FLOOR_CHECK"
 
 echo "== T05 DB2 after-state (CSV stand-in)"
 IP="$WORK/ITEM_PRICE.csv"
