@@ -21,8 +21,14 @@ and every comment), `searchJiraIssuesUsingJql`, `addCommentToJiraIssue`,
 `getTransitionsForJiraIssue`, `transitionJiraIssue`. No other Jira tools.
 
 1. Read the ticket and **all** comments (`getJiraIssue` with `comment` in
-   `fields`). Extract: job/program, paragraph, required proof, rows or values
-   the ticket says will change, and anything marked "preserve".
+   `fields`). The embedded `comment` object is paginated (`startAt`,
+   `maxResults`, `total`): if `total` is larger than the number of comments
+   returned, the history is incomplete and the server has no paginated
+   comment reader - do not proceed as if you had read everything; comment
+   `BLOCKED - ticket has <total> comments, only <n> readable via MCP; please
+   summarise the rest or trim the thread` and stop (in ask mode, say this in
+   the session instead). Extract: job/program, paragraph, required proof, rows
+   or values the ticket says will change, and anything marked "preserve".
 2. If the session was started with a question rather than a ticket (a `@Devin`
    comment or `!cobol_ask`), find the ticket key in the comment or in the
    issue the comment was posted on. If there is none, no ticket is in scope:
@@ -32,7 +38,9 @@ and every comment), `searchJiraIssuesUsingJql`, `addCommentToJiraIssue`,
 3. Post one comment (`addCommentToJiraIssue`): session link + one-line plan +
    the phases you will report on. Move `Ready for Devin -> In Progress`
    (`getTransitionsForJiraIssue` then `transitionJiraIssue`). For
-   `!cobol_ask` / read-only work: do **not** transition; comment only.
+   `!cobol_ask` / read-only work: skip this step and section 2 entirely - no
+   transition, no opening or phase comments; the single answer comment
+   defined in `cobol-ask` is the only Jira write.
 
 ## 2. During the work - one comment per phase
 

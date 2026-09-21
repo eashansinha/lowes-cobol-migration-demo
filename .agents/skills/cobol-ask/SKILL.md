@@ -8,10 +8,12 @@ argument-hint: <question or MFM ticket key>
 # COBOL ask mode (no side effects)
 
 You are answering, not implementing. No edits, no shell, no PR, no Jira
-transitions. Follow `mfm-jira-board` for reading the ticket; skip its
-transition steps. Jira is the `atlassian` MCP server and the only Jira tools
-you may use are the three in `allowed-tools`: `getJiraIssue` (with `comment`
-in `fields`, which returns every comment), `searchJiraIssuesUsingJql` and
+transitions. Follow `mfm-jira-board` step 1 for reading the ticket (including
+its truncated-comments check); skip its opening comment, phase comments and
+transitions - the one answer comment below is your only Jira write. Jira is
+the `atlassian` MCP server and the only Jira tools you may use are the three
+in `allowed-tools`: `getJiraIssue` (with `comment` in `fields`; check its
+`total` against the comments returned), `searchJiraIssuesUsingJql` and
 `addCommentToJiraIssue` - never `transitionJiraIssue`, `editJiraIssue` or
 `createJiraIssue`.
 
@@ -46,11 +48,13 @@ Start from the JCL and walk outward; cite everything.
 
 Finish:
 
-- Ticket in scope: post the answer as one comment on the ticket
-  (`addCommentToJiraIssue`) and end it with "To implement, start a Devin
-  session with `!jcl_migrate` or `!cobol_fix` on this ticket."
+- Ticket in scope: post the answer as the **one and only** comment on the
+  ticket (`addCommentToJiraIssue`) and end it with the same sentence as
+  `playbooks/cobol-ask.md`: "To implement, add the `!jcl_migrate` (migration)
+  or `!cobol_fix` (in-place change) label to this ticket, or start a session
+  from this comment."
 - No ticket in scope: end the session answer with "To implement, create or
-  pick an MFM ticket for this and start a Devin session on it with
-  `!jcl_migrate` or `!cobol_fix`."
+  pick an MFM ticket for this, then add the `!jcl_migrate` or `!cobol_fix`
+  label to it or start a session from it."
 
 Do not start the implementation session yourself.
