@@ -51,7 +51,10 @@ loud - it is the point of the CSV stand-in model.
 ### 0.4 Jira
 
 Follow `docs/JIRA_SETUP.md`: board **Mainframe Modernization**, tickets
-MFM-101 and MFM-102 in **Ready for Devin**. If the Jira integration is not
+MFM-101 and MFM-102 in **Ready for Devin**. The live sandbox is
+[MFM on cog-gtm.atlassian.net](https://cog-gtm.atlassian.net/jira/software/projects/MFM/boards/2594);
+there the tickets are keyed `MFM-1` (= MFM-101) and `MFM-2` (= MFM-102), so
+substitute those keys in the prompts. If the Jira integration is not
 connected to this Devin org, keep the board open in a browser tab and move
 tickets by hand while narrating - the prompt text below contains everything
 Devin needs regardless.

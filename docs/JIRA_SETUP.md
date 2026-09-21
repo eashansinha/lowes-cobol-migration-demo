@@ -4,11 +4,25 @@ This document defines the Jira board and the two tickets used in the demo. The
 tickets are written so Devin can pick them up directly from the Jira
 integration (or be pasted as a prompt) without further clarification.
 
+## Live sandbox (cog-gtm.atlassian.net)
+
+The board and both tickets exist in a dedicated sandbox project. The ticket
+numbers below (`MFM-101` / `MFM-102`) are the demo aliases used throughout the
+docs; Jira numbered them from 1.
+
+| Alias | Live key | URL |
+|-------|----------|-----|
+| Board | `MFM` | https://cog-gtm.atlassian.net/jira/software/projects/MFM/boards/2594 |
+| MFM-101 | `MFM-1` | https://cog-gtm.atlassian.net/browse/MFM-1 |
+| MFM-102 | `MFM-2` | https://cog-gtm.atlassian.net/browse/MFM-2 |
+
+Both tickets sit in **Ready for Devin**.
+
 ## Board
 
 | Setting | Value |
 |---------|-------|
-| Project | **Mainframe Modernization** (key `MFM`, Kanban, company-managed) |
+| Project | **Mainframe Modernization** (key `MFM`, Kanban, team-managed) |
 | Issue types | Story (migration work), Bug (in-place fixes), Task |
 | Columns | `Backlog` -> `Ready for Devin` -> `In Progress` -> `In Review` -> `Verified` -> `Done` |
 | WIP limit | `In Progress` = 3 (one Devin session per ticket) |
