@@ -1,7 +1,7 @@
 ---
 name: cobol-ask
 description: Read-only "ask mode" for a COBOL/JCL question or a Jira ticket in this repo. Answer with file:line citations and a scoped plan; never edit, build, open a PR or move the ticket. Use when a Jira comment or ticket asks a question, carries the !cobol_ask label, or the task says explore/scope/explain.
-allowed-tools: Read, Grep, ListDir
+allowed-tools: Read, Grep, ListDir, getJiraIssue, searchJiraIssuesUsingJql, addCommentToJiraIssue
 argument-hint: <question or MFM ticket key>
 ---
 
@@ -9,7 +9,13 @@ argument-hint: <question or MFM ticket key>
 
 You are answering, not implementing. No edits, no shell, no PR, no Jira
 transitions. Follow `mfm-jira-board` for reading the ticket; skip its
-transition steps.
+transition steps. The only Jira tools you may use are the issue read, JQL
+search and add-comment tools (Atlassian MCP names above; the integration's
+`get_issue` / `list_comments` / `add_comment` equivalents count as the same)
+- never `transitionJiraIssue`, `editJiraIssue` or `createJiraIssue`.
+
+If the question carries no ticket key, answer the question as asked from the
+repo and say so; do not pick a ticket from the board on the asker's behalf.
 
 ## Answer shape
 
@@ -29,11 +35,12 @@ Start from the JCL and walk outward; cite everything.
    (truncation vs ROUNDED, sign handling, COMP-3 widths, sort order), or an
    unresolved question. Label each "observed - preserve unless a ticket says
    fix".
-6. **If asked to scope** - a plan of <=10 steps mapped onto the repo's loop
-   (baseline `scripts/build.sh && scripts/run_job.sh && scripts/compare.sh`
-   -> explore -> spec -> plan -> implement -> compare on the same inputs -> CI
-   gate -> PR), the golden files that would change, and a confidence
-   estimate: high / medium / low with one sentence why.
+6. **If asked to scope** - a plan of <=10 steps for the *implementing*
+   session to run later (you run none of them now), mapped onto the repo's
+   loop (baseline `scripts/build.sh && scripts/run_job.sh &&
+   scripts/compare.sh` -> explore -> spec -> plan -> implement -> compare on
+   the same inputs -> CI gate -> PR), the golden files that would change, and
+   a confidence estimate: high / medium / low with one sentence why.
 
 Finish with: "To implement, start a Devin session with `!jcl_migrate` or
 `!cobol_fix` on this ticket." Do not start it yourself.

@@ -53,7 +53,8 @@ integration's **Session mode**:
    defects as "preserve", and end with a scoped plan + confidence estimate
    and the sentence "to implement, start a session with `!jcl_migrate` /
    `!cobol_fix`". The repo skill `.agents/skills/cobol-ask/SKILL.md` is the
-   same procedure with `allowed-tools: Read, Grep, ListDir`, so it applies
+   same procedure with an `allowed-tools` list limited to repo reads plus
+   Jira issue read / JQL search / add-comment (no transitions), so it applies
    even when someone pastes the ticket into a plain session. Costs one short
    session; scoped per ticket, so `!jcl_migrate` on another ticket still runs
    as a full session.

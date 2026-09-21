@@ -19,9 +19,10 @@ on the ticket - do not pick one silently.
    `list_comments`). Extract: job/program, paragraph, required proof, rows or
    values the ticket says will change, and anything marked "preserve".
 2. If the session was started with a question rather than a ticket (a `@Devin`
-   comment or `!cobol_ask`), find the ticket key in the comment; if there is
-   none, work from the board's `Ready for Devin` column and say which ticket
-   you assumed.
+   comment or `!cobol_ask`), find the ticket key in the comment or in the
+   issue the comment was posted on; if there is none, answer the question as
+   asked from the repo and say that no ticket was in scope. Never pick a
+   ticket off the board on the asker's behalf.
 3. Post one comment: session link + one-line plan + the phases you will report
    on. Move `Ready for Devin -> In Progress` (`list_transitions` then apply).
    For `!cobol_ask` / read-only work: do **not** transition; comment only.
