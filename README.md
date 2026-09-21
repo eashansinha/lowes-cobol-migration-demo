@@ -31,6 +31,7 @@ scripts/compare.sh            golden-master diff (exit 8 on any mismatch)
 tests/run_tests.sh            41-assertion regression harness (runs in CI)
 .github/workflows/ci.yml      installs GnuCOBOL, builds, runs job + tests
 docs/DEMO_RUNBOOK.md          30-minute Devin demo script
+docs/JIRA_TO_DEVIN_DEMO_GUIDE.md  Jira ticket -> Devin session -> verified PR; estate replication; verification loop
 docs/JIRA_SETUP.md            "Mainframe Modernization" board + tickets MFM-101 / MFM-102
 docs/MIGRATION_SPEC_TEMPLATE.md  the "specify" artefact Devin produces per job
 playbooks/                    Devin playbook drafts: job migration, in-place COBOL maintenance
@@ -116,9 +117,12 @@ unload time. See the Q&A in `docs/DEMO_RUNBOOK.md`.
 1. `docs/DEMO_RUNBOOK.md` - the 30-minute script, prompts for Devin, what to
    watch, fallbacks, Q&A.
 2. `docs/JIRA_SETUP.md` - the board and the two tickets Devin picks up.
-3. `docs/MIGRATION_SPEC_TEMPLATE.md` - the artefact Devin fills in during
+3. `docs/JIRA_TO_DEVIN_DEMO_GUIDE.md` - how a ticket becomes a session
+   (integration, Ask Devin, API), how the estate is replicated, and the
+   oracle-first verification loop Devin must follow.
+4. `docs/MIGRATION_SPEC_TEMPLATE.md` - the artefact Devin fills in during
    **specify**.
-4. `playbooks/` - reusable Devin playbooks for migration and maintenance.
+5. `playbooks/` - reusable Devin playbooks for migration and maintenance.
 
 ## Licence
 

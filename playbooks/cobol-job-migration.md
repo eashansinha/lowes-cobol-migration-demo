@@ -1,5 +1,7 @@
 # Playbook: migrate a JCL batch job to Java (Spring Batch) with equivalence verification
 
+Installed in the Devin org as macro `!jcl_migrate` (usable as a Jira playbook label).
+
 Use for tickets of the form *"Migrate <JOB> to Java with equivalence
 verification"*. One job per ticket. The deliverable is a PR whose description
 proves, with a byte-compare, that the Java job produces the same report and

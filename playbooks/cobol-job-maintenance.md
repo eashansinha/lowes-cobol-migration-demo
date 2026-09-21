@@ -1,5 +1,7 @@
 # Playbook: in-place COBOL change with regression proof
 
+Installed in the Devin org as macro `!cobol_fix` (usable as a Jira playbook label).
+
 Use for tickets that change the behaviour of an existing COBOL program that
 stays in production (defect fix, rule change, new field). The deliverable is
 a PR that shows **exactly** which outputs change, proves everything else is
