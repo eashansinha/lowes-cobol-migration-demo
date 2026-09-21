@@ -605,14 +605,18 @@
 
       *----------------------------------------------------------------*
       * BR-P6 : clearance items (IM-STATUS = C)                        *
-      *   take an additional 10% stacking markdown on the promo price  *
-      *   before the margin floor and .x9 rounding are applied.        *
+      *   take an additional 10% stacking markdown on the promo price, *
+      *   then round down to .x9 and enforce the margin floor exactly  *
+      *   as 2610 does (a floored price is rounded UP to .x9).         *
       *----------------------------------------------------------------*
        2620-CLEARANCE-PRICING.
            COMPUTE WS-WORK-PRICE =
                WS-WORK-PRICE * WS-CLEARANCE-MARKDOWN / 100
+           PERFORM 2650-ROUND-DOWN-X9
            PERFORM 2660-APPLY-MARGIN-FLOOR
-           PERFORM 2650-ROUND-DOWN-X9.
+           IF WS-FLOOR-APPLIED = 'Y'
+               PERFORM 2670-ROUND-UP-X9
+           END-IF.
 
        2650-ROUND-DOWN-X9.
            COMPUTE WS-CENTS = WS-WORK-PRICE * 100
