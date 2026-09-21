@@ -74,12 +74,36 @@ assert_grep "BR-V5 lapsed promo skipped"                                      "$
 assert_grep "BR-U2 promo already in effect -> NOCHG"                          "$RPT" '^PRM2026112 10020977 MW  P .*NOCHG    PROMO ALREADY IN EFFECT'
 assert_grep "BR-U1 missing ITEM_PRICE row rejected"                           "$RPT" '^PRM2026132 10199001 NC  P .*REJECT   NO ITEM_PRICE ROW FOR REGION'
 
-# Documented CURRENT behaviour of the clearance path (subject of Jira MFM-102):
-# floor 273.00 is applied before the round-down, so the shelf price lands at
-# 272.99, one cent BELOW the floor. The golden files freeze this behaviour;
-# MFM-102 changes the expected value to 273.09 and updates this assertion.
-assert_grep "BR-P6 clearance floor (CURRENT behaviour, see MFM-102: 272.99 < floor 273.00)" \
-    "$RPT" '^PRM2026123 10082345 NE  P +498\.00 +498\.00 +272\.99  FLOOR +UPDATED'
+# BR-P6 clearance path (Jira MFM-2): 498.00 -40% = 298.80, x0.90 = 268.92,
+# round down 268.89, floor 273.00 (cost 260.00 + 5%), round UP -> 273.09.
+assert_grep "BR-P6 clearance floor applied after round-down, rounded UP (268.92 -> 273.09)" \
+    "$RPT" '^PRM2026123 10082345 NE  P +498\.00 +498\.00 +273\.09  FLOOR +UPDATED'
+
+# Class-level regression for MFM-2: every report line with reason FLOOR must
+# carry a NEW-PRICE at or above the item's margin floor, where the floor is
+# derived from ITEMMAST (IM-UNIT-COST cols 48-54 9(5)V99, IM-FLOOR-PCT cols
+# 62-64) exactly as 2660-APPLY-MARGIN-FLOOR computes it. Reported as
+# "<rows checked>/<rows below floor>" so the check cannot pass vacuously.
+floor_check() {          # floor_check <report> <status-filter: C or .>
+    awk -v want="$2" '
+        FNR == NR {                                   # ITEMMAST.dat
+            sku = substr($0, 1, 8); st = substr($0, 47, 1)
+            cost = substr($0, 48, 7) + 0; pct = substr($0, 62, 3) + 0
+            floor[sku] = int(cost * (100 + pct) / 100)
+            status[sku] = st
+            next
+        }
+        $8 == "FLOOR" && status[$2] ~ want {          # report detail line
+            checked++
+            if (int($7 * 100 + 0.5) < floor[$2]) below++
+        }
+        END { printf "%d/%d\n", checked, below }
+    ' "$ROOT/data/input/ITEMMAST.dat" "$1"
+}
+assert_eq "BR-P6 no clearance FLOOR line has NEW-PRICE below its floor (checked/below)" \
+    "4/0" "$(floor_check "$RPT" C)"
+assert_eq "BR-P5/P6 no FLOOR line of any status is below its floor (checked/below)" \
+    "9/0" "$(floor_check "$RPT" .)"
 
 echo "== T05 DB2 after-state (CSV stand-in)"
 IP="$WORK/ITEM_PRICE.csv"
