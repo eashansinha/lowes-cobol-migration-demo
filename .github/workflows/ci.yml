@@ -1,0 +1,44 @@
+name: PRCUPD01 batch regression
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install GnuCOBOL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends gnucobol
+          cobc --version | head -1
+
+      - name: Build load module
+        run: scripts/build.sh
+
+      - name: Run job + golden-master compare
+        run: |
+          rc=0
+          scripts/run_job.sh || rc=$?
+          echo "PRCUPD01 MAXCC=$rc"
+          test "$rc" -eq 4     # 4 = expected warnings (skips / rejects on PRCRPT)
+
+      - name: Regression test harness
+        run: tests/run_tests.sh
+
+      - name: Upload run artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prcupd01-outputs
+          path: |
+            work/PRCUPD01.rpt
+            work/ITEM_PRICE.csv
+            work/PRICE_HIST.csv
+          retention-days: 14
