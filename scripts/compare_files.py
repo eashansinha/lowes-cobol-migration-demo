@@ -244,7 +244,7 @@ def compare_fixed(args):
         out.append(f"  WARNING baseline records not LRECL {lrecl}: {bad_b[:10]}")
     if bad_t:
         out.append(f"  TARGET records not LRECL {lrecl}: {bad_t[:10]} (RECFM/LRECL contract broken)")
-    diffs = layer1_bytes(layout, base, targ, args.max_diffs, out)
+    layer1_bytes(layout, base, targ, args.max_diffs, out)
     for note in stream_diffs(raw_b, raw_t):
         out.append(f"  STREAM {note}")
     identical = raw_b == raw_t

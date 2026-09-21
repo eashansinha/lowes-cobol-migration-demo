@@ -95,3 +95,12 @@ the PR URL, the comparator verdict per output file and any stop condition hit.
 
 The parent only collects results and never merges: each PR is reviewed with
 Devin Review and approved by a human who owns that job.
+
+## Verification of the deliverable
+
+This estate is batch only - there is no web frontend to open, so the proof is
+the layered file comparison on identical inputs plus the regression harness,
+pasted verbatim into the PR. If a job in scope ever gains a UI (an operator
+console, a report viewer), the same rule applies in its shape: start it, walk
+its main pages before and after the change, and attach a screen recording as
+the evidence instead of describing it.
